@@ -25,8 +25,8 @@ ipv6_enable() {
 }
 
 add_tproxy_rules() {
-  ${1} rule add fwmark "${fwmark}" table "${table}" priority 1000
-  ${1} route add local default dev lo table "${table}"
+  ${1} rule add fwmark "${FWMARK}" table "${TABLE}" priority 1000
+  ${1} route add local default dev lo table "${TABLE}"
 
   ${2} -t mangle -N ${3}_EXTERNAL
   ${2} -t mangle -F ${3}_EXTERNAL
@@ -35,11 +35,11 @@ add_tproxy_rules() {
   ${2} -t mangle -N ${3}_BLOCK_LOOPBACK
   ${2} -t mangle -F ${3}_BLOCK_LOOPBACK
 
-  ${2} -t mangle -A ${3}_LOCAL -m owner --uid-owner ${core_uid} --gid-owner ${core_gid} -j RETURN
+  ${2} -t mangle -A ${3}_LOCAL -m owner --uid-owner ${CORE_UID} --gid-owner ${CORE_GID} -j RETURN
   
   for proto in udp tcp; do
-    ${2} -t mangle -A ${3}_LOCAL -p ${proto} --dport 53 -j MARK --set-xmark ${fwmark}
-    ${2} -t mangle -A ${3}_EXTERNAL -p ${proto} --dport 53 -j TPROXY --on-port ${tport} --tproxy-mark ${fwmark}
+    ${2} -t mangle -A ${3}_LOCAL -p ${proto} --dport 53 -j MARK --set-xmark ${FWMARK}
+    ${2} -t mangle -A ${3}_EXTERNAL -p ${proto} --dport 53 -j TPROXY --on-port ${tport} --tproxy-mark ${FWMARK}
   done
   
   for subnet in ${4}; do
@@ -51,13 +51,13 @@ add_tproxy_rules() {
   ${2} -t mangle -A ${3}_LOCAL -j ${3}_BLOCK_LOOPBACK
 
   for proto in udp tcp; do
-    ${2} -t mangle -A ${3}_EXTERNAL -p ${proto} -j TPROXY --on-port "${tport}" --tproxy-mark "${fwmark}"
+    ${2} -t mangle -A ${3}_EXTERNAL -p ${proto} -j TPROXY --on-port "${tport}" --tproxy-mark "${FWMARK}"
   done
 
   if [[ -n "${AIDs}" ]]; then
     for AID in ${AIDs[@]}; do
-      ${2} -t mangle -A ${3}_LOCAL -m owner --uid-owner ${AID} -p tcp -j MARK --set-xmark ${fwmark}
-      ${2} -t mangle -A ${3}_LOCAL -m owner --uid-owner ${AID} -p udp -j MARK --set-xmark ${fwmark}
+      ${2} -t mangle -A ${3}_LOCAL -m owner --uid-owner ${AID} -p tcp -j MARK --set-xmark ${FWMARK}
+      ${2} -t mangle -A ${3}_LOCAL -m owner --uid-owner ${AID} -p udp -j MARK --set-xmark ${FWMARK}
     done
   fi
 
@@ -68,23 +68,23 @@ add_tproxy_rules() {
         ${2} -t mangle -A ${3}_LOCAL -m owner --uid-owner ${appid} -p tcp ! --dport 53 -j RETURN
         ${2} -t mangle -A ${3}_LOCAL -m owner --uid-owner ${appid} -p udp ! --dport 53 -j RETURN
       done
-      ${2} -t mangle -A ${3}_LOCAL -j MARK --set-xmark ${fwmark}
+      ${2} -t mangle -A ${3}_LOCAL -j MARK --set-xmark ${FWMARK}
     else
-      ${2} -t mangle -A ${3}_LOCAL -j MARK --set-xmark ${fwmark}
+      ${2} -t mangle -A ${3}_LOCAL -j MARK --set-xmark ${FWMARK}
     fi
     ;;
   "whitelist")
     if [[ ${#uids[@]} -gt 0 ]]; then
       for appid in ${uids[*]}; do
-        ${2} -t mangle -A ${3}_LOCAL -m owner --uid-owner ${appid} -p tcp -j MARK --set-xmark ${fwmark}
-        ${2} -t mangle -A ${3}_LOCAL -m owner --uid-owner ${appid} -p udp -j MARK --set-xmark ${fwmark}
+        ${2} -t mangle -A ${3}_LOCAL -m owner --uid-owner ${appid} -p tcp -j MARK --set-xmark ${FWMARK}
+        ${2} -t mangle -A ${3}_LOCAL -m owner --uid-owner ${appid} -p udp -j MARK --set-xmark ${FWMARK}
       done
     else
-      ${2} -t mangle -A ${3}_LOCAL -j MARK --set-xmark ${fwmark}
+      ${2} -t mangle -A ${3}_LOCAL -j MARK --set-xmark ${FWMARK}
     fi
     ;;
   *)
-    ${2} -t mangle -A ${3}_LOCAL -j MARK --set-xmark ${fwmark}
+    ${2} -t mangle -A ${3}_LOCAL -j MARK --set-xmark ${FWMARK}
     toast "GLOBAL PROXY, CHECK PROXY_MODE"
     ;;
   esac
@@ -94,9 +94,9 @@ add_tproxy_rules() {
 }
 
 del_tproxy_rules() {
-  ${1} rule del fwmark "${fwmark}" table "${table}" priority 1000
-  ${1} route del local default dev lo table "${table}"
-  ${1} route flush table "${table}"
+  ${1} rule del fwmark "${FWMARK}" table "${TABLE}" priority 1000
+  ${1} route del local default dev lo table "${TABLE}"
+  ${1} route flush table "${TABLE}"
   ${2} -t mangle -D PREROUTING -j ${3}_EXTERNAL
   ${2} -t mangle -D OUTPUT -j ${3}_LOCAL
   ${2} -t mangle -F ${3}_EXTERNAL
@@ -108,20 +108,20 @@ del_tproxy_rules() {
 }
 
 run_add_tproxy_rules() {
-  add_tproxy_rules "ip -4" "${IPV}" "${chain_name}4" "${intranet4[*]}"
+  add_tproxy_rules "ip -4" "${IPV}" "${CHAIN_NAME}4" "${intranet4[*]}"
   [[ "${IPV6}" == "false" ]] && return 1
-  add_tproxy_rules "ip -6" "${IP6V}" "${chain_name}6" "${intranet6[*]}"
+  add_tproxy_rules "ip -6" "${IP6V}" "${CHAIN_NAME}6" "${intranet6[*]}"
 }
 
 run_del_tproxy_rules() {
-  del_tproxy_rules "ip -4" "${IPV}" "${chain_name}4"
+  del_tproxy_rules "ip -4" "${IPV}" "${CHAIN_NAME}4"
   [[ "${IPV6}" == "false" ]] && return 1
-  del_tproxy_rules "ip -6" "${IP6V}" "${chain_name}6"
+  del_tproxy_rules "ip -6" "${IP6V}" "${CHAIN_NAME}6"
 }
 
 quic_rules() {
-  ${1} ${2} OUTPUT -p udp --dport 443 -m owner ! --uid-owner ${core_uid} ! --gid-owner ${core_gid} -j REJECT
-  ${1} ${2} OUTPUT -p udp --dport 80 -m owner ! --uid-owner ${core_uid} ! --gid-owner ${core_gid} -j REJECT
+  ${1} ${2} OUTPUT -p udp --dport 443 -m owner ! --uid-owner ${CORE_UID} ! --gid-owner ${CORE_GID} -j REJECT
+  ${1} ${2} OUTPUT -p udp --dport 80 -m owner ! --uid-owner ${CORE_UID} ! --gid-owner ${CORE_GID} -j REJECT
 }
 
 run_add_quic_rules() {
@@ -141,7 +141,7 @@ run_del_disable_quic() {
 }
 
 start_tproxy() {
-  [ -f "${log_dir}/pid.txt" ] && stop_tproxy
+  [ -f "${LOG_DIR}/pid.txt" ] && stop_tproxy
   check_files_complete
   { init_base; init_dns; init_route; init_uids; }
   { [[ "${IPV6}" == "true" ]] && ipv6_enable || disable_ipv6; } >/dev/null 2>&1
@@ -149,20 +149,20 @@ start_tproxy() {
   fw_clean iptables
   fw_clean ip6tables
   ulimit -SHn 1000000
-  nohup busybox setuidgid ${core_uid}:${core_gid} ${core_xray} run -confdir ${conf_dir} >/dev/null 2>&1 &
-  pid_xray=$!
+  nohup busybox setuidgid ${CORE_UID}:${CORE_GID} ${CORE} run -confdir ${CONF_DIR} >/dev/null 2>&1 &
+  PID_CORE=$!
   cron_task
   pid-record
   toast "🤪NetProxy ENABLED"
 }
 
 stop_tproxy() {
-  if [ -f "${log_dir}/pid.txt" ]; then
+  if [ -f "${LOG_DIR}/pid.txt" ]; then
     { run_del_tproxy_rules; run_del_disable_quic; } >/dev/null 2>&1
     ip -6 rule del unreachable pref 100 >/dev/null 2>&1
     while IFS=: read name pid; do
       kill -9 "${pid}"
-    done < "${log_dir}/pid.txt"
+    done < "${LOG_DIR}/pid.txt"
     find "$(dirname "$(pwd)")" -type f \( -name "*.log" -o -name "*.txt" -o -name "*.list" -o -name "root" \) -exec rm -f {} +
   fi
   toast "🥴NetProxy DISABLED"

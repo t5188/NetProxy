@@ -31,20 +31,20 @@ fi
 }
 
 run_block_loopback() {
-  block_loopback "${IPV}" "-I" "${chain_name}4" "-4"
+  block_loopback "${IPV}" "-I" "${CHAIN_NAME}4" "-4"
   [[ "${IPV6}" == "false" ]] && return 1
-  block_loopback "${IP6V}" "-I" "${chain_name}6" "-6"
+  block_loopback "${IP6V}" "-I" "${CHAIN_NAME}6" "-6"
 }
 
 rm_block_loopback() {
   # IPv4
-  if iptables -t mangle -S "${chain_name}4_BLOCK_LOOPBACK" >/dev/null 2>&1; then
-    block_loopback "${IPV}" "-D" "${chain_name}4" "-4"
+  if iptables -t mangle -S "${CHAIN_NAME}4_BLOCK_LOOPBACK" >/dev/null 2>&1; then
+    block_loopback "${IPV}" "-D" "${CHAIN_NAME}4" "-4"
   fi
   # IPv6
   [[ "${IPV6}" == "false" ]] && return 1
-  if ip6tables -t mangle -S "${chain_name}6_BLOCK_LOOPBACK" >/dev/null 2>&1; then
-    block_loopback "${IP6V}" "-D" "${chain_name}6" "-6"
+  if ip6tables -t mangle -S "${CHAIN_NAME}6_BLOCK_LOOPBACK" >/dev/null 2>&1; then
+    block_loopback "${IP6V}" "-D" "${CHAIN_NAME}6" "-6"
   fi
 }
 
@@ -52,7 +52,7 @@ if [[ -f "${module_dir}/disable" ]]; then
   exit 0
 fi
 
-if [[ "${events}" == "w" && "$network_mode" == "tproxy" ]]; then
+if [[ "${events}" == "w" && "$NETWORK_MODE" == "tproxy" ]]; then
   rm_block_loopback
   wait
   run_block_loopback
