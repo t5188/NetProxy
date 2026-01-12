@@ -134,7 +134,6 @@ set_perm "${MODPATH}/uninstall.sh" 0 0 0755
 set_perm /data/adb/NetProxy/scripts/ 0 0 0755
 set_perm "${MODPATH}/action.sh" 0 0 0755
 ui_print "- 完成权限设置"
-[ -d "${destination_folder}" ] && ui_print "- 还原配置文件"
 
 pm install -r /data/adb/NetProxy/scripts/toast.apk && rm -f /data/adb/NetProxy/scripts/toast.apk || ui_print "- 请手动安装toast.apk"
 find "${source_folder}" -type f -name ".gitkeep" -exec rm -f {} +
