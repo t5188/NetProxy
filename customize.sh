@@ -139,4 +139,5 @@ ui_print "- 还原配置文件"
 pm install -r /data/adb/NetProxy/scripts/toast.apk && rm -f /data/adb/NetProxy/scripts/toast.apk || ui_print "- 请手动安装toast.apk"
 find "${source_folder}" -type f -name ".gitkeep" -exec rm -f {} +
 ui_print "- enjoy!"
-# Last edited: 2025.12.23
+
+# Last edited: 2026.1.12

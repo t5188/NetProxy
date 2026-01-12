@@ -12,4 +12,4 @@ curl -L -o "$TMP" "$URL" || wget -O "$TMP" "$URL"
 mkdir -p "$DEST"
 unzip -o "$TMP" -d "$DEST"
 rm -f "$TMP" "$DEST/LICENSE" "$DEST/README.md"
-# Last edited: 2025.12.23
+# Last edited: 2026.1.12
