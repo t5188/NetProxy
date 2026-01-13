@@ -1,6 +1,6 @@
 # Release Notes
-## v1.00
-_Release Date: 2026-1-12_
+## v1.01
+_Release Date: 2026-1-13_
 
-- launch
+- Code Update
 ---

@@ -1,7 +1,7 @@
 id=ANetProxy
 name=NetProxy
-version=v1.00
-versionCode=20260112
+version=v1.01
+versionCode=20260113
 author=Jerry
 description=A module designed for transparent proxying
 updateJson=https://github.com/t5188/NetProxy/raw/main/update.json
