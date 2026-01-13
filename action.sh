@@ -3,12 +3,12 @@
 export PATH="/data/adb/ap/bin:/data/adb/ksu/bin:/data/adb/magisk:$PATH"
 
 MODULE_DIR="/data/adb/modules/ANetProxy"
-scripts_dir="/data/adb/NetProxy/scripts"
+SCRIPTS_DIR="/data/adb/NetProxy/scripts"
 
 restart_proxy_service() {
   if [ ! -f "${MODULE_DIR}/disable" ]; then
     echo "🔁Restart NetProxy"
-    ${scripts_dir}/NetProxy.service enable >/dev/null 2>&1
+    ${SCRIPTS_DIR}/NetProxy.service enable >/dev/null 2>&1
   else
     echo "🥴 Module Disabled"
     sleep 1
