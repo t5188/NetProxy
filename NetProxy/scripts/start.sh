@@ -4,7 +4,7 @@ cd ${0%/*} # current working directory
 source "$(pwd)/settings.ini"
 
 proxy_service() {
-  if [[ ! -f "${module_dir}/disable" ]]; then
+  if [[ ! -f "${MODULE_DIR}/disable" ]]; then
     $(pwd)/NetProxy.service enable >/dev/null 2>&1
   else
     toast "Module Disabled"
@@ -34,7 +34,7 @@ start_inotifyd() {
       return
     fi
   done
-  inotifyd "$(pwd)/NetProxy.inotify" "${module_dir}" >/dev/null 2>&1 &
+  inotifyd "$(pwd)/NetProxy.inotify" "${MODULE_DIR}" >/dev/null 2>&1 &
 }
 
 proxy_service

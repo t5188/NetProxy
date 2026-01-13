@@ -2,11 +2,11 @@
 # Environment variable settings
 export PATH="/data/adb/ap/bin:/data/adb/ksu/bin:/data/adb/magisk:$PATH"
 
-module_dir="/data/adb/modules/ANetProxy"
+MODULE_DIR="/data/adb/modules/ANetProxy"
 scripts_dir="/data/adb/NetProxy/scripts"
 
 restart_proxy_service() {
-  if [ ! -f "${module_dir}/disable" ]; then
+  if [ ! -f "${MODULE_DIR}/disable" ]; then
     echo "🔁Restart NetProxy"
     ${scripts_dir}/NetProxy.service enable >/dev/null 2>&1
   else
