@@ -1,16 +1,16 @@
 #!/system/bin/sh
-SCRIPTS_DIR="/data/adb/NetProxy/scripts"
-MODE=$(stat -c %a "${SCRIPTS_DIR}/start.sh")
+scripts_dir="/data/adb/NetProxy/scripts"
+MODE=$(stat -c %a "${scripts_dir}/start.sh")
 
 (
   until [ "$(getprop sys.boot_completed)" = "1" ]; do sleep 3; done
 
   if [ "${MODE}" != "755" ]; then
-    chmod 755 "${SCRIPTS_DIR}/start.sh"
-    chown root:net_admin "${SCRIPTS_DIR}/start.sh"
+    chmod 755 "${scripts_dir}/start.sh"
+    chown root:net_admin "${scripts_dir}/start.sh"
   fi
 
-  "${SCRIPTS_DIR}/start.sh"
+  "${scripts_dir}/start.sh"
 ) &
 
 exit 0

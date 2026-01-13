@@ -48,7 +48,7 @@ rm_block_loopback() {
   fi
 }
 
-if [[ -f "${MODULE_DIR}/disable" ]]; then
+if [[ -f "${module_dir}/disable" ]]; then
   exit 0
 fi
 
