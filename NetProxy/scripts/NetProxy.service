@@ -143,8 +143,8 @@ run_del_disable_quic() {
 start_tproxy() {
   [ -f "${LOG_DIR}/pid.txt" ] && stop_tproxy
   check_files_complete
-  { init_base; init_dns; init_route; init_uids; }
   runExternalKernel enable 
+  { init_base; init_dns; init_route; init_uids; }
   { [[ "${IPV6}" == "true" ]] && ipv6_enable || disable_ipv6; } >/dev/null 2>&1
   { run_add_tproxy_rules; run_add_quic_rules; } >/dev/null 2>&1
   fw_clean iptables
@@ -171,4 +171,4 @@ stop_tproxy() {
 
 case "$1" in enable) start_tproxy ;; disable) stop_tproxy ;; esac
 
-# Last edited: 2026.1.16
+# Last edited: 2026.1.18
