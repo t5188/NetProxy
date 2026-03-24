@@ -1,0 +1,11 @@
+{
+  "listen": ":1080",
+  "server": "ip:port",
+  "uuid": "uuid",
+  "password": "password",
+  "sni": "domain",
+  "allow_insecure": false,
+  "congestion_control": "bbr",
+  "pinned_certchain_sha256": "pinned_certchain_sha256",
+  "log_level": "info"
+}
