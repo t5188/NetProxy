@@ -1,6 +1,6 @@
 # Release Notes
-## v1.04
-_Release Date: 2026-1-30_
+## v1.05
+_Release Date: 2026-3-24_
 
-- Update the `runExternalKernel` function
+- Use the `juicity protocol` by default
 ---
