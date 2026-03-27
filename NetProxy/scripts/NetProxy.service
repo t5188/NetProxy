@@ -25,39 +25,44 @@ ipv6_enable() {
 }
 
 add_tproxy_rules() {
-  ${1} rule add fwmark "${FWMARK}" table "${TABLE}" priority 1000
-  ${1} route add local default dev lo table "${TABLE}"
+  local ip_cmd="$1"
+  local ipt_cmd="$2"
+  local chain="$3"
+  local subnets="$4"
 
-  ${2} -t mangle -N ${3}_EXTERNAL
-  ${2} -t mangle -F ${3}_EXTERNAL
-  ${2} -t mangle -N ${3}_LOCAL
-  ${2} -t mangle -F ${3}_LOCAL
-  ${2} -t mangle -N ${3}_BLOCK_LOOPBACK
-  ${2} -t mangle -F ${3}_BLOCK_LOOPBACK
+  ${ip_cmd} rule add fwmark "${FWMARK}" table "${TABLE}" priority 1000
+  ${ip_cmd} route add local default dev lo table "${TABLE}"
 
-  ${2} -t mangle -A ${3}_LOCAL -m owner --uid-owner ${CORE_UID} --gid-owner ${CORE_GID} -j RETURN
+  ${ipt_cmd} -t mangle -N ${chain}_EXTERNAL
+  ${ipt_cmd} -t mangle -F ${chain}_EXTERNAL
+  ${ipt_cmd} -t mangle -N ${chain}_LOCAL
+  ${ipt_cmd} -t mangle -F ${chain}_LOCAL
+  ${ipt_cmd} -t mangle -N ${chain}_BLOCK_LOOPBACK
+  ${ipt_cmd} -t mangle -F ${chain}_BLOCK_LOOPBACK
+
+  ${ipt_cmd} -t mangle -A ${chain}_LOCAL -m owner --uid-owner ${CORE_UID} --gid-owner ${CORE_GID} -j RETURN
   
   for proto in udp tcp; do
-    ${2} -t mangle -A ${3}_LOCAL -p ${proto} --dport 53 -j MARK --set-xmark ${FWMARK}
-    ${2} -t mangle -A ${3}_EXTERNAL -p ${proto} --dport 53 -j TPROXY --on-port ${tport} --tproxy-mark ${FWMARK}
+    ${ipt_cmd} -t mangle -A ${chain}_LOCAL -p ${proto} --dport 53 -j MARK --set-xmark ${FWMARK}
+    ${ipt_cmd} -t mangle -A ${chain}_EXTERNAL -p ${proto} --dport 53 -j TPROXY --on-port ${tport} --tproxy-mark ${FWMARK}
   done
   
-  for subnet in ${4}; do
-    ${2} -t mangle -A ${3}_EXTERNAL -d ${subnet} -j RETURN
-    ${2} -t mangle -A ${3}_LOCAL -d ${subnet} -j RETURN
+  for subnet in ${subnets}; do
+    ${ipt_cmd} -t mangle -A ${chain}_EXTERNAL -d ${subnet} -j RETURN
+    ${ipt_cmd} -t mangle -A ${chain}_LOCAL -d ${subnet} -j RETURN
   done
 
-  ${2} -t mangle -A ${3}_EXTERNAL -j ${3}_BLOCK_LOOPBACK
-  ${2} -t mangle -A ${3}_LOCAL -j ${3}_BLOCK_LOOPBACK
+  ${ipt_cmd} -t mangle -A ${chain}_EXTERNAL -j ${chain}_BLOCK_LOOPBACK
+  ${ipt_cmd} -t mangle -A ${chain}_LOCAL -j ${chain}_BLOCK_LOOPBACK
 
   for proto in udp tcp; do
-    ${2} -t mangle -A ${3}_EXTERNAL -p ${proto} -j TPROXY --on-port "${tport}" --tproxy-mark "${FWMARK}"
+    ${ipt_cmd} -t mangle -A ${chain}_EXTERNAL -p ${proto} -j TPROXY --on-port "${tport}" --tproxy-mark "${FWMARK}"
   done
 
   if [[ -n "${AIDs}" ]]; then
     for AID in ${AIDs[@]}; do
-      ${2} -t mangle -A ${3}_LOCAL -m owner --uid-owner ${AID} -p tcp -j MARK --set-xmark ${FWMARK}
-      ${2} -t mangle -A ${3}_LOCAL -m owner --uid-owner ${AID} -p udp -j MARK --set-xmark ${FWMARK}
+      ${ipt_cmd} -t mangle -A ${chain}_LOCAL -m owner --uid-owner ${AID} -p tcp -j MARK --set-xmark ${FWMARK}
+      ${ipt_cmd} -t mangle -A ${chain}_LOCAL -m owner --uid-owner ${AID} -p udp -j MARK --set-xmark ${FWMARK}
     done
   fi
 
@@ -65,46 +70,50 @@ add_tproxy_rules() {
   "blacklist")
     if [[ ${#uids[@]} -gt 0 ]]; then
       for appid in ${uids[*]}; do
-        ${2} -t mangle -A ${3}_LOCAL -m owner --uid-owner ${appid} -p tcp ! --dport 53 -j RETURN
-        ${2} -t mangle -A ${3}_LOCAL -m owner --uid-owner ${appid} -p udp ! --dport 53 -j RETURN
+        ${ipt_cmd} -t mangle -A ${chain}_LOCAL -m owner --uid-owner ${appid} -p tcp ! --dport 53 -j RETURN
+        ${ipt_cmd} -t mangle -A ${chain}_LOCAL -m owner --uid-owner ${appid} -p udp ! --dport 53 -j RETURN
       done
-      ${2} -t mangle -A ${3}_LOCAL -j MARK --set-xmark ${FWMARK}
+      ${ipt_cmd} -t mangle -A ${chain}_LOCAL -j MARK --set-xmark ${FWMARK}
     else
-      ${2} -t mangle -A ${3}_LOCAL -j MARK --set-xmark ${FWMARK}
+      ${ipt_cmd} -t mangle -A ${chain}_LOCAL -j MARK --set-xmark ${FWMARK}
     fi
     ;;
   "whitelist")
     if [[ ${#uids[@]} -gt 0 ]]; then
       for appid in ${uids[*]}; do
-        ${2} -t mangle -A ${3}_LOCAL -m owner --uid-owner ${appid} -p tcp -j MARK --set-xmark ${FWMARK}
-        ${2} -t mangle -A ${3}_LOCAL -m owner --uid-owner ${appid} -p udp -j MARK --set-xmark ${FWMARK}
+        ${ipt_cmd} -t mangle -A ${chain}_LOCAL -m owner --uid-owner ${appid} -p tcp -j MARK --set-xmark ${FWMARK}
+        ${ipt_cmd} -t mangle -A ${chain}_LOCAL -m owner --uid-owner ${appid} -p udp -j MARK --set-xmark ${FWMARK}
       done
     else
-      ${2} -t mangle -A ${3}_LOCAL -j MARK --set-xmark ${FWMARK}
+      ${ipt_cmd} -t mangle -A ${chain}_LOCAL -j MARK --set-xmark ${FWMARK}
     fi
     ;;
   *)
-    ${2} -t mangle -A ${3}_LOCAL -j MARK --set-xmark ${FWMARK}
+    ${ipt_cmd} -t mangle -A ${chain}_LOCAL -j MARK --set-xmark ${FWMARK}
     toast "GLOBAL PROXY, CHECK PROXY_MODE"
     ;;
   esac
 
-  ${2} -t mangle -A PREROUTING -j ${3}_EXTERNAL
-  ${2} -t mangle -A OUTPUT -j ${3}_LOCAL
+  ${ipt_cmd} -t mangle -A PREROUTING -j ${chain}_EXTERNAL
+  ${ipt_cmd} -t mangle -A OUTPUT -j ${chain}_LOCAL
 }
 
 del_tproxy_rules() {
-  ${1} rule del fwmark "${FWMARK}" table "${TABLE}" priority 1000
-  ${1} route del local default dev lo table "${TABLE}"
-  ${1} route flush table "${TABLE}"
-  ${2} -t mangle -D PREROUTING -j ${3}_EXTERNAL
-  ${2} -t mangle -D OUTPUT -j ${3}_LOCAL
-  ${2} -t mangle -F ${3}_EXTERNAL
-  ${2} -t mangle -F ${3}_LOCAL
-  ${2} -t mangle -F ${3}_BLOCK_LOOPBACK
-  ${2} -t mangle -X ${3}_EXTERNAL
-  ${2} -t mangle -X ${3}_LOCAL
-  ${2} -t mangle -X ${3}_BLOCK_LOOPBACK
+  local ip_cmd="$1"
+  local ipt_cmd="$2"
+  local chain="$3"
+
+  ${ip_cmd} rule del fwmark "${FWMARK}" table "${TABLE}" priority 1000
+  ${ip_cmd} route del local default dev lo table "${TABLE}"
+  ${ip_cmd} route flush table "${TABLE}"
+  ${ipt_cmd} -t mangle -D PREROUTING -j ${chain}_EXTERNAL
+  ${ipt_cmd} -t mangle -D OUTPUT -j ${chain}_LOCAL
+  ${ipt_cmd} -t mangle -F ${chain}_EXTERNAL
+  ${ipt_cmd} -t mangle -F ${chain}_LOCAL
+  ${ipt_cmd} -t mangle -F ${chain}_BLOCK_LOOPBACK
+  ${ipt_cmd} -t mangle -X ${chain}_EXTERNAL
+  ${ipt_cmd} -t mangle -X ${chain}_LOCAL
+  ${ipt_cmd} -t mangle -X ${chain}_BLOCK_LOOPBACK
 }
 
 run_add_tproxy_rules() {
@@ -120,8 +129,11 @@ run_del_tproxy_rules() {
 }
 
 quic_rules() {
-  ${1} ${2} OUTPUT -p udp --dport 443 -m owner ! --uid-owner ${CORE_UID} ! --gid-owner ${CORE_GID} -j REJECT
-  ${1} ${2} OUTPUT -p udp --dport 80 -m owner ! --uid-owner ${CORE_UID} ! --gid-owner ${CORE_GID} -j REJECT
+  local ipt_cmd="$1"
+  local action="$2"
+
+  ${ipt_cmd} ${action} OUTPUT -p udp --dport 443 -m owner ! --uid-owner ${CORE_UID} ! --gid-owner ${CORE_GID} -j REJECT
+  ${ipt_cmd} ${action} OUTPUT -p udp --dport 80 -m owner ! --uid-owner ${CORE_UID} ! --gid-owner ${CORE_GID} -j REJECT
 }
 
 run_add_quic_rules() {
@@ -171,4 +183,4 @@ stop_tproxy() {
 
 case "$1" in enable) start_tproxy ;; disable) stop_tproxy ;; esac
 
-# Last edited: 2026.1.18
+# Last edited: 2026.3.27
