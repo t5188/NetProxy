@@ -15,7 +15,7 @@ jobs:
 
     steps:
       # Step 1: Checkout the repository
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       # Step 2: Set up GitHub token for authentication
       - name: Set up GitHub token
@@ -89,7 +89,7 @@ jobs:
 
       # Step 11: Upload the new release
       - name: Upload release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         if: ${{ success() }}
         with:
           tag_name: ${{ env.VERSION }}
