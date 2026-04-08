@@ -95,6 +95,7 @@ jobs:
         run: |
           if gh release view "${{ env.VERSION }}" >/dev/null 2>&1; then
             gh release upload "${{ env.VERSION }}" NetProxy-v*.zip --clobber
+            gh release edit "${{ env.VERSION }}" --notes-file CHANGELOG.md
           else
             gh release create "${{ env.VERSION }}" NetProxy-v*.zip \
               --title "${{ env.VERSION }}" \
