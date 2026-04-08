@@ -89,7 +89,7 @@ jobs:
 
       # Step 11: Upload the new release
       - name: Upload release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         if: ${{ success() }}
         with:
           tag_name: ${{ env.VERSION }}
