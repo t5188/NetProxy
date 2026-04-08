@@ -56,7 +56,7 @@ add_tproxy_rules() {
   ${ipt_cmd} -t mangle -A ${chain}_LOCAL -j ${chain}_BLOCK_LOOPBACK
 
   for proto in udp tcp; do
-    ${ipt_cmd} -t mangle -A ${chain}_EXTERNAL -p ${proto} -j TPROXY --on-port "${tport}" --tproxy-mark "${FWMARK}"
+    ${ipt_cmd} -t mangle -A ${chain}_EXTERNAL -p ${proto} -j TPROXY --on-port ${tport} --tproxy-mark ${FWMARK}
   done
 
   if [[ -n "${AIDs}" ]]; then
