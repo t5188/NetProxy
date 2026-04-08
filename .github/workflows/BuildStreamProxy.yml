@@ -15,7 +15,7 @@ jobs:
 
     steps:
       # Step 1: Checkout the repository
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Step 2: Set up GitHub token for authentication
       - name: Set up GitHub token
@@ -89,13 +89,16 @@ jobs:
 
       # Step 11: Upload the new release
       - name: Upload release
-        uses: softprops/action-gh-release@v2
         if: ${{ success() }}
-        with:
-          tag_name: ${{ env.VERSION }}
-          files: NetProxy-v*.zip
-          body: ${{ env.RELEASE_NOTES }}
-          prerelease: true
-          draft: false
-          generate_release_notes: false
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "${{ env.VERSION }}" >/dev/null 2>&1; then
+            gh release upload "${{ env.VERSION }}" NetProxy-v*.zip --clobber
+          else
+            gh release create "${{ env.VERSION }}" NetProxy-v*.zip \
+              --title "${{ env.VERSION }}" \
+              --notes "${{ env.RELEASE_NOTES }}" \
+              --prerelease
+          fi
           
