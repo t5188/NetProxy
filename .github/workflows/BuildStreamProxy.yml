@@ -89,13 +89,15 @@ jobs:
 
       # Step 11: Upload the new release
       - name: Upload release
-        uses: softprops/action-gh-release@v2
         if: ${{ success() }}
-        with:
-          tag_name: ${{ env.VERSION }}
-          files: NetProxy-v*.zip
-          body: ${{ env.RELEASE_NOTES }}
-          prerelease: true
-          draft: false
-          generate_release_notes: false
-          
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "${{ env.VERSION }}" >/dev/null 2>&1; then
+            gh release upload "${{ env.VERSION }}" NetProxy-v*.zip --clobber
+          else
+            gh release create "${{ env.VERSION }}" NetProxy-v*.zip \
+              --title "${{ env.VERSION }}" \
+              --notes-file CHANGELOG.md \
+              --prerelease
+          fi
