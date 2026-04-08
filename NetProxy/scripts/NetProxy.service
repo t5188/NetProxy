@@ -37,8 +37,6 @@ add_tproxy_rules() {
   ${ipt_cmd} -t mangle -F ${chain}_EXTERNAL
   ${ipt_cmd} -t mangle -N ${chain}_LOCAL
   ${ipt_cmd} -t mangle -F ${chain}_LOCAL
-  ${ipt_cmd} -t mangle -N ${chain}_BLOCK_LOOPBACK
-  ${ipt_cmd} -t mangle -F ${chain}_BLOCK_LOOPBACK
 
   ${ipt_cmd} -t mangle -A ${chain}_LOCAL -m owner --uid-owner ${CORE_UID} --gid-owner ${CORE_GID} -j RETURN
   
@@ -51,9 +49,6 @@ add_tproxy_rules() {
     ${ipt_cmd} -t mangle -A ${chain}_EXTERNAL -d ${subnet} -j RETURN
     ${ipt_cmd} -t mangle -A ${chain}_LOCAL -d ${subnet} -j RETURN
   done
-
-  ${ipt_cmd} -t mangle -A ${chain}_EXTERNAL -j ${chain}_BLOCK_LOOPBACK
-  ${ipt_cmd} -t mangle -A ${chain}_LOCAL -j ${chain}_BLOCK_LOOPBACK
 
   for proto in udp tcp; do
     ${ipt_cmd} -t mangle -A ${chain}_EXTERNAL -p ${proto} -j TPROXY --on-port ${tport} --tproxy-mark ${FWMARK}
@@ -110,10 +105,8 @@ del_tproxy_rules() {
   ${ipt_cmd} -t mangle -D OUTPUT -j ${chain}_LOCAL
   ${ipt_cmd} -t mangle -F ${chain}_EXTERNAL
   ${ipt_cmd} -t mangle -F ${chain}_LOCAL
-  ${ipt_cmd} -t mangle -F ${chain}_BLOCK_LOOPBACK
   ${ipt_cmd} -t mangle -X ${chain}_EXTERNAL
   ${ipt_cmd} -t mangle -X ${chain}_LOCAL
-  ${ipt_cmd} -t mangle -X ${chain}_BLOCK_LOOPBACK
 }
 
 run_add_tproxy_rules() {
