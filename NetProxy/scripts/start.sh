@@ -11,24 +11,8 @@ proxy_service() {
   fi
 }
 
-net_inotifyd() {
-  while [[ ! -f /data/misc/net/rt_tables ]]; do
-    sleep 3
-  done
-
-  net_dir="/data/misc/net"
-
-  for PID in "${PIDs[@]}"; do
-    if grep -q "$(pwd)/net.inotify" "/proc/$PID/cmdline"; then
-      return
-    fi
-  done
-  inotifyd "$(pwd)/net.inotify" "${net_dir}" >/dev/null 2>&1 &
-}
-
 start_inotifyd() {
   PIDs=($(busybox pidof inotifyd)) # Environment variables are required.
-  net_inotifyd
   for PID in "${PIDs[@]}"; do
     if grep -q "$(pwd)/NetProxy.inotify" "/proc/$PID/cmdline"; then
       return
