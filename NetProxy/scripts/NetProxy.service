@@ -24,7 +24,7 @@ ipv6_enable() {
   ip -6 rule del unreachable pref 100 || true
 }
 
-add_tproxy_rules() {
+create_tproxy() {
   local ip_cmd="$1"
   local ipt_cmd="$2"
   local chain="$3"
@@ -93,7 +93,7 @@ add_tproxy_rules() {
   ${ipt_cmd} -t mangle -A OUTPUT -j ${chain}_LOCAL
 }
 
-del_tproxy_rules() {
+delete_tproxy() {
   local ip_cmd="$1"
   local ipt_cmd="$2"
   local chain="$3"
@@ -109,16 +109,16 @@ del_tproxy_rules() {
   ${ipt_cmd} -t mangle -X ${chain}_LOCAL
 }
 
-run_add_tproxy_rules() {
-  add_tproxy_rules "ip -4" "${IPV}" "${CHAIN_NAME}4" "${intranet4[*]}"
+start_tproxy() {
+  create_tproxy "ip -4" "${IPV}" "${CHAIN_NAME}4" "${intranet4[*]}"
   [[ "${IPV6}" == "false" ]] && return 1
-  add_tproxy_rules "ip -6" "${IP6V}" "${CHAIN_NAME}6" "${intranet6[*]}"
+  create_tproxy "ip -6" "${IP6V}" "${CHAIN_NAME}6" "${intranet6[*]}"
 }
 
-run_del_tproxy_rules() {
-  del_tproxy_rules "ip -4" "${IPV}" "${CHAIN_NAME}4"
+stop_tproxy() {
+  delete_tproxy "ip -4" "${IPV}" "${CHAIN_NAME}4"
   [[ "${IPV6}" == "false" ]] && return 1
-  del_tproxy_rules "ip -6" "${IP6V}" "${CHAIN_NAME}6"
+  delete_tproxy "ip -6" "${IP6V}" "${CHAIN_NAME}6"
 }
 
 quic_rules() {
@@ -129,7 +129,7 @@ quic_rules() {
   ${ipt_cmd} ${action} OUTPUT -p udp --dport 80 -m owner ! --uid-owner ${CORE_UID} ! --gid-owner ${CORE_GID} -j REJECT
 }
 
-run_add_quic_rules() {
+start_quic() {
   if [ "${QUIC}" = "disable" ]; then
     quic_rules "${IPV}" "-I"
     [[ "${IPV6}" == "false" ]] && return 1
@@ -137,7 +137,7 @@ run_add_quic_rules() {
   fi
 }
 
-run_del_disable_quic() {
+stop_quic() {
   if [ "${QUIC}" = "disable" ]; then
     quic_rules "${IPV}" "-D"
     [[ "${IPV6}" == "false" ]] && return 1
@@ -145,13 +145,13 @@ run_del_disable_quic() {
   fi
 }
 
-start_tproxy() {
-  [ -f "${LOG_DIR}/pid.txt" ] && stop_tproxy
+enable_tproxy() {
+  [ -f "${LOG_DIR}/pid.txt" ] && disable_tproxy
   check_files_complete
   runExternalKernel enable 
   { init_base; init_dns; init_route; init_uids; }
   { [[ "${IPV6}" == "true" ]] && ipv6_enable || disable_ipv6; } >/dev/null 2>&1
-  { run_add_tproxy_rules; run_add_quic_rules; } >/dev/null 2>&1
+  { start_tproxy; start_quic; } >/dev/null 2>&1
   fw_clean iptables
   fw_clean ip6tables
   ulimit -SHn 1000000
@@ -162,9 +162,9 @@ start_tproxy() {
   toast "🤪NetProxy ENABLED"
 }
 
-stop_tproxy() {
+disable_tproxy() {
   if [ -f "${LOG_DIR}/pid.txt" ]; then
-    { run_del_tproxy_rules; run_del_disable_quic; } >/dev/null 2>&1
+    { stop_tproxy; stop_quic; } >/dev/null 2>&1
     ip -6 rule del unreachable pref 100 >/dev/null 2>&1
     while IFS=: read name pid; do
       kill -9 "${pid}"
@@ -174,6 +174,6 @@ stop_tproxy() {
   toast "🥴NetProxy DISABLED"
 }
 
-case "$1" in enable) start_tproxy ;; disable) stop_tproxy ;; esac
+case "$1" in enable) enable_tproxy ;; disable) disable_tproxy ;; esac
 
-# Last edited: 2026.4.09
+# Last edited: 2026.4.10
