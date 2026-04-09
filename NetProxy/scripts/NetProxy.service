@@ -38,7 +38,7 @@ add_tproxy_rules() {
   ${ipt_cmd} -t mangle -N ${chain}_LOCAL
   ${ipt_cmd} -t mangle -F ${chain}_LOCAL
 
-  ${ipt_cmd} -t mangle -A ${chain}_LOCAL -m owner --uid-owner ${CORE_UID} --gid-owner ${CORE_GID} -j RETURN
+  ${ipt_cmd} -t mangle -A ${chain}_LOCAL -m owner --gid-owner ${CORE_GID} -j RETURN
   
   for proto in udp tcp; do
     ${ipt_cmd} -t mangle -A ${chain}_LOCAL -p ${proto} --dport 53 -j MARK --set-xmark ${FWMARK}
@@ -176,4 +176,4 @@ stop_tproxy() {
 
 case "$1" in enable) start_tproxy ;; disable) stop_tproxy ;; esac
 
-# Last edited: 2026.3.27
+# Last edited: 2026.4.09
