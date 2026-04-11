@@ -4,7 +4,7 @@ _Release Date: 2026-4-11_
 
 - runExternalKernel {enable {j|x}|disable}
 - eg:
-- `runExternalKernel enable j` Enable juicity core
-- `runExternalKernel enable x` Enable x-tunnel core
-- `runExternalKernel disable` only xray core
+  - `runExternalKernel enable j` → xray + juicity (dual proxy)  
+  - `runExternalKernel enable x` → xray + x-tunnel (dual proxy)  
+  - `runExternalKernel disable` → xray only (single proxy)
 ---
