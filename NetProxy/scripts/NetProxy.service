@@ -150,8 +150,7 @@ enable_tproxy() {
   { check_files_complete; init_uids; }
   { [[ "${IPv6_enable}" == "true" ]] && ipv6_enable || disable_ipv6; } >/dev/null 2>&1
   { start_tproxy; start_quic; } >/dev/null 2>&1
-  fw_clean iptables
-  fw_clean ip6tables
+  { fw_clean iptables; fw_clean ip6tables; }
   ulimit -SHn 1000000
   nohup busybox setuidgid ${CORE_UID}:${CORE_GID} ${CORE} run -confdir ${CONF_DIR} >/dev/null 2>&1 &
   PID_CORE=$!
