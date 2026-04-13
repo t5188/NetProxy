@@ -42,7 +42,7 @@ create_tproxy() {
   
   for proto in udp tcp; do
     ${ipt_cmd} -t mangle -A ${chain}_LOCAL -p ${proto} --dport 53 -j MARK --set-xmark ${FWMARK}
-    ${ipt_cmd} -t mangle -A ${chain}_EXTERNAL -p ${proto} --dport 53 -j TPROXY --on-port ${tport} --tproxy-mark ${FWMARK}
+    ${ipt_cmd} -t mangle -A ${chain}_EXTERNAL -p ${proto} --dport 53 -j TPROXY --on-port ${TPORT} --tproxy-mark ${FWMARK}
   done
   
   for subnet in ${subnets}; do
@@ -51,7 +51,7 @@ create_tproxy() {
   done
 
   for proto in udp tcp; do
-    ${ipt_cmd} -t mangle -A ${chain}_EXTERNAL -p ${proto} -j TPROXY --on-port ${tport} --tproxy-mark ${FWMARK}
+    ${ipt_cmd} -t mangle -A ${chain}_EXTERNAL -p ${proto} -j TPROXY --on-port ${TPORT} --tproxy-mark ${FWMARK}
   done
 
   if [[ -n "${AIDs}" ]]; then
@@ -110,15 +110,15 @@ delete_tproxy() {
 }
 
 start_tproxy() {
-  create_tproxy "ip -4" "${IP4V}" "${CHAIN_NAME}4" "${intranet4[*]}"
+  create_tproxy "ip -4" "${IPv4}" "${CHAIN_NAME}4" "${intranet4[*]}"
   [[ "${IPV6}" == "false" ]] && return 1
-  create_tproxy "ip -6" "${IP6V}" "${CHAIN_NAME}6" "${intranet6[*]}"
+  create_tproxy "ip -6" "${IPv6}" "${CHAIN_NAME}6" "${intranet6[*]}"
 }
 
 stop_tproxy() {
-  delete_tproxy "ip -4" "${IP4V}" "${CHAIN_NAME}4"
+  delete_tproxy "ip -4" "${IPv4}" "${CHAIN_NAME}4"
   [[ "${IPV6}" == "false" ]] && return 1
-  delete_tproxy "ip -6" "${IP6V}" "${CHAIN_NAME}6"
+  delete_tproxy "ip -6" "${IPv6}" "${CHAIN_NAME}6"
 }
 
 quic_rules() {
@@ -131,24 +131,23 @@ quic_rules() {
 
 start_quic() {
   if [ "${QUIC}" = "disable" ]; then
-    quic_rules "${IP4V}" "-I"
+    quic_rules "${IPv4}" "-I"
     [[ "${IPV6}" == "false" ]] && return 1
-    quic_rules "${IP6V}" "-I"
+    quic_rules "${IPv6}" "-I"
   fi
 }
 
 stop_quic() {
   if [ "${QUIC}" = "disable" ]; then
-    quic_rules "${IP4V}" "-D"
+    quic_rules "${IPv4}" "-D"
     [[ "${IPV6}" == "false" ]] && return 1
-    quic_rules "${IP6V}" "-D"
+    quic_rules "${IPv6}" "-D"
   fi
 }
 
 enable_tproxy() {
   [ -f "${LOG_DIR}/pid.txt" ] && disable_tproxy
-  check_files_complete
-  { init_base; init_dns; init_route; init_uids; }
+  { check_files_complete; init_uids; }
   { [[ "${IPV6}" == "true" ]] && ipv6_enable || disable_ipv6; } >/dev/null 2>&1
   { start_tproxy; start_quic; } >/dev/null 2>&1
   fw_clean iptables
