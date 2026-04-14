@@ -152,8 +152,14 @@ enable_tproxy() {
   { start_tproxy; start_quic; } >/dev/null 2>&1
   { fw_clean iptables; fw_clean ip6tables; }
   ulimit -SHn 1000000
+  
   nohup busybox setuidgid ${CORE_UID}:${CORE_GID} ${CORE} run -confdir ${CONF_DIR} >/dev/null 2>&1 &
   PID_CORE=$!
+  
+  nohup busybox setuidgid ${CORE_UID}:${CORE_GID} ${CORE_DIR}/x-tunnel $(xargs < ${CORE_DIR}/x.conf) >/dev/null 2>&1 &
+  PID_XTUNNEL=$!
+  [ -n "${PID_XTUNNEL}" ] && echo "pid_xtunnel:${PID_XTUNNEL}" >> "${LOG_DIR}/pid.txt"
+
   cron_task
   pid-record
   toast "🤪NetProxy ENABLED"
