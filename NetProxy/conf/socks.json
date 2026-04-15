@@ -1,0 +1,16 @@
+{
+  "outbounds": [
+    {
+      "tag": "proxy",
+      "protocol": "socks",
+      "settings": {
+        "servers": [
+          {
+            "address": "localhost",
+            "port": 1080
+          }
+        ]
+      }
+    }
+  ]
+}
