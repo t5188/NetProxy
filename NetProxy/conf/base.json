@@ -41,23 +41,17 @@
       "tag": "direct"
     },
     {
-      "tag": "block",
       "protocol": "blackhole",
       "settings": {
         "response": {
           "type": "http"
         }
-      }
+      },
+      "tag": "block"
     },
     {
-      "tag": "dns-out",
       "protocol": "dns",
-      "settings": {
-        "network": "tcp",
-        "address": "1.1.1.1",
-        "port": 53,
-        "nonIPQuery": "skip"
-      }
+      "tag": "dns-out"
     }
   ]
 }
