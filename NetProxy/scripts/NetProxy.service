@@ -153,7 +153,7 @@ enable_tproxy() {
   { fw_clean iptables; fw_clean ip6tables; }
   ulimit -SHn 1000000
   { 
-    nohup busybox setuidgid ${CORE_UID}:${CORE_GID} ${CORE} run -confdir ${CONF_DIR} >/dev/null 2>&1 &
+    nohup busybox setuidgid ${CORE_UID}:${CORE_GID} ${CORE} run >/dev/null 2>&1 &
     PID_CORE=$!
     [ -n "${PID_CORE}" ] && echo "pid_${CORE##*/}:${PID_CORE}" >>"${LOG_DIR}/pid.txt"
   }
