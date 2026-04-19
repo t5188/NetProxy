@@ -1,6 +1,4 @@
 # Release Notes
-## v1.04
-_Release Date: 2026-1-30_
+## v2.00
+_Release Date: 2026-4-20_
 
-- Update the `runExternalKernel` function
----
