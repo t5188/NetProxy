@@ -31,20 +31,20 @@ fi
 }
 
 run_block_loopback() {
-  block_loopback "${IP4V}" "-I" "${CHAIN_NAME}4" "-4"
-  [[ "${IPV6}" == "false" ]] && return 1
-  block_loopback "${IP6V}" "-I" "${CHAIN_NAME}6" "-6"
+  block_loopback "${IPv4}" "-I" "${CHAIN_NAME}4" "-4"
+  [[ "${IPv6_enable}" == "false" ]] && return 1
+  block_loopback "${IPv6}" "-I" "${CHAIN_NAME}6" "-6"
 }
 
 rm_block_loopback() {
   # IPv4
   if iptables -t mangle -S "${CHAIN_NAME}4_BLOCK_LOOPBACK" >/dev/null 2>&1; then
-    block_loopback "${IP4V}" "-D" "${CHAIN_NAME}4" "-4"
+    block_loopback "${IPv4}" "-D" "${CHAIN_NAME}4" "-4"
   fi
   # IPv6
-  [[ "${IPV6}" == "false" ]] && return 1
+  [[ "${IPv6_enable}" == "false" ]] && return 1
   if ip6tables -t mangle -S "${CHAIN_NAME}6_BLOCK_LOOPBACK" >/dev/null 2>&1; then
-    block_loopback "${IP6V}" "-D" "${CHAIN_NAME}6" "-6"
+    block_loopback "${IPv6}" "-D" "${CHAIN_NAME}6" "-6"
   fi
 }
 
