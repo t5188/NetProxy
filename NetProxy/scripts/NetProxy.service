@@ -24,40 +24,40 @@ ipv6_enable() {
   ip -6 rule del unreachable pref 100 || true
 }
 
-create_tproxy() {
-  local ip_cmd="$1"
-  local ipt_cmd="$2"
-  local chain="$3"
-  local subnets="$4"
+add_tproxy_rules() {
+  ${1} rule add fwmark "${FWMARK}" table "${TABLE}" priority 1000
+  ${1} route add local default dev lo table "${TABLE}"
 
-  ${ip_cmd} rule add fwmark "${FWMARK}" table "${TABLE}" priority 1000
-  ${ip_cmd} route add local default dev lo table "${TABLE}"
+  ${2} -t mangle -N ${3}_EXTERNAL
+  ${2} -t mangle -F ${3}_EXTERNAL
+  ${2} -t mangle -N ${3}_LOCAL
+  ${2} -t mangle -F ${3}_LOCAL
+  ${2} -t mangle -N ${3}_BLOCK_LOOPBACK
+  ${2} -t mangle -F ${3}_BLOCK_LOOPBACK
 
-  ${ipt_cmd} -t mangle -N ${chain}_EXTERNAL
-  ${ipt_cmd} -t mangle -F ${chain}_EXTERNAL
-  ${ipt_cmd} -t mangle -N ${chain}_LOCAL
-  ${ipt_cmd} -t mangle -F ${chain}_LOCAL
-
-  ${ipt_cmd} -t mangle -A ${chain}_LOCAL -m owner --gid-owner ${CORE_GID} -j RETURN
+  ${2} -t mangle -A ${3}_LOCAL -m owner --uid-owner ${CORE_UID} --gid-owner ${CORE_GID} -j RETURN
   
   for proto in udp tcp; do
-    ${ipt_cmd} -t mangle -A ${chain}_LOCAL -p ${proto} --dport 53 -j MARK --set-xmark ${FWMARK}
-    ${ipt_cmd} -t mangle -A ${chain}_EXTERNAL -p ${proto} --dport 53 -j TPROXY --on-port ${TPORT} --tproxy-mark ${FWMARK}
+    ${2} -t mangle -A ${3}_LOCAL -p ${proto} --dport 53 -j MARK --set-xmark ${FWMARK}
+    ${2} -t mangle -A ${3}_EXTERNAL -p ${proto} --dport 53 -j TPROXY --on-port ${tport} --tproxy-mark ${FWMARK}
   done
   
-  for subnet in ${subnets}; do
-    ${ipt_cmd} -t mangle -A ${chain}_EXTERNAL -d ${subnet} -j RETURN
-    ${ipt_cmd} -t mangle -A ${chain}_LOCAL -d ${subnet} -j RETURN
+  for subnet in ${4}; do
+    ${2} -t mangle -A ${3}_EXTERNAL -d ${subnet} -j RETURN
+    ${2} -t mangle -A ${3}_LOCAL -d ${subnet} -j RETURN
   done
 
+  ${2} -t mangle -A ${3}_EXTERNAL -j ${3}_BLOCK_LOOPBACK
+  ${2} -t mangle -A ${3}_LOCAL -j ${3}_BLOCK_LOOPBACK
+
   for proto in udp tcp; do
-    ${ipt_cmd} -t mangle -A ${chain}_EXTERNAL -p ${proto} -j TPROXY --on-port ${TPORT} --tproxy-mark ${FWMARK}
+    ${2} -t mangle -A ${3}_EXTERNAL -p ${proto} -j TPROXY --on-port "${tport}" --tproxy-mark "${FWMARK}"
   done
 
   if [[ -n "${AIDs}" ]]; then
     for AID in ${AIDs[@]}; do
-      ${ipt_cmd} -t mangle -A ${chain}_LOCAL -m owner --uid-owner ${AID} -p tcp -j MARK --set-xmark ${FWMARK}
-      ${ipt_cmd} -t mangle -A ${chain}_LOCAL -m owner --uid-owner ${AID} -p udp -j MARK --set-xmark ${FWMARK}
+      ${2} -t mangle -A ${3}_LOCAL -m owner --uid-owner ${AID} -p tcp -j MARK --set-xmark ${FWMARK}
+      ${2} -t mangle -A ${3}_LOCAL -m owner --uid-owner ${AID} -p udp -j MARK --set-xmark ${FWMARK}
     done
   fi
 
@@ -65,105 +65,101 @@ create_tproxy() {
   "blacklist")
     if [[ ${#uids[@]} -gt 0 ]]; then
       for appid in ${uids[*]}; do
-        ${ipt_cmd} -t mangle -A ${chain}_LOCAL -m owner --uid-owner ${appid} -p tcp ! --dport 53 -j RETURN
-        ${ipt_cmd} -t mangle -A ${chain}_LOCAL -m owner --uid-owner ${appid} -p udp ! --dport 53 -j RETURN
+        ${2} -t mangle -A ${3}_LOCAL -m owner --uid-owner ${appid} -p tcp ! --dport 53 -j RETURN
+        ${2} -t mangle -A ${3}_LOCAL -m owner --uid-owner ${appid} -p udp ! --dport 53 -j RETURN
       done
-      ${ipt_cmd} -t mangle -A ${chain}_LOCAL -j MARK --set-xmark ${FWMARK}
+      ${2} -t mangle -A ${3}_LOCAL -j MARK --set-xmark ${FWMARK}
     else
-      ${ipt_cmd} -t mangle -A ${chain}_LOCAL -j MARK --set-xmark ${FWMARK}
+      ${2} -t mangle -A ${3}_LOCAL -j MARK --set-xmark ${FWMARK}
     fi
     ;;
   "whitelist")
     if [[ ${#uids[@]} -gt 0 ]]; then
       for appid in ${uids[*]}; do
-        ${ipt_cmd} -t mangle -A ${chain}_LOCAL -m owner --uid-owner ${appid} -p tcp -j MARK --set-xmark ${FWMARK}
-        ${ipt_cmd} -t mangle -A ${chain}_LOCAL -m owner --uid-owner ${appid} -p udp -j MARK --set-xmark ${FWMARK}
+        ${2} -t mangle -A ${3}_LOCAL -m owner --uid-owner ${appid} -p tcp -j MARK --set-xmark ${FWMARK}
+        ${2} -t mangle -A ${3}_LOCAL -m owner --uid-owner ${appid} -p udp -j MARK --set-xmark ${FWMARK}
       done
     else
-      ${ipt_cmd} -t mangle -A ${chain}_LOCAL -j MARK --set-xmark ${FWMARK}
+      ${2} -t mangle -A ${3}_LOCAL -j MARK --set-xmark ${FWMARK}
     fi
     ;;
   *)
-    ${ipt_cmd} -t mangle -A ${chain}_LOCAL -j MARK --set-xmark ${FWMARK}
+    ${2} -t mangle -A ${3}_LOCAL -j MARK --set-xmark ${FWMARK}
     toast "GLOBAL PROXY, CHECK PROXY_MODE"
     ;;
   esac
 
-  ${ipt_cmd} -t mangle -A PREROUTING -j ${chain}_EXTERNAL
-  ${ipt_cmd} -t mangle -A OUTPUT -j ${chain}_LOCAL
+  ${2} -t mangle -A PREROUTING -j ${3}_EXTERNAL
+  ${2} -t mangle -A OUTPUT -j ${3}_LOCAL
 }
 
-delete_tproxy() {
-  local ip_cmd="$1"
-  local ipt_cmd="$2"
-  local chain="$3"
-
-  ${ip_cmd} rule del fwmark "${FWMARK}" table "${TABLE}" priority 1000
-  ${ip_cmd} route del local default dev lo table "${TABLE}"
-  ${ip_cmd} route flush table "${TABLE}"
-  ${ipt_cmd} -t mangle -D PREROUTING -j ${chain}_EXTERNAL
-  ${ipt_cmd} -t mangle -D OUTPUT -j ${chain}_LOCAL
-  ${ipt_cmd} -t mangle -F ${chain}_EXTERNAL
-  ${ipt_cmd} -t mangle -F ${chain}_LOCAL
-  ${ipt_cmd} -t mangle -X ${chain}_EXTERNAL
-  ${ipt_cmd} -t mangle -X ${chain}_LOCAL
+del_tproxy_rules() {
+  ${1} rule del fwmark "${FWMARK}" table "${TABLE}" priority 1000
+  ${1} route del local default dev lo table "${TABLE}"
+  ${1} route flush table "${TABLE}"
+  ${2} -t mangle -D PREROUTING -j ${3}_EXTERNAL
+  ${2} -t mangle -D OUTPUT -j ${3}_LOCAL
+  ${2} -t mangle -F ${3}_EXTERNAL
+  ${2} -t mangle -F ${3}_LOCAL
+  ${2} -t mangle -F ${3}_BLOCK_LOOPBACK
+  ${2} -t mangle -X ${3}_EXTERNAL
+  ${2} -t mangle -X ${3}_LOCAL
+  ${2} -t mangle -X ${3}_BLOCK_LOOPBACK
 }
 
-start_tproxy() {
-  create_tproxy "ip -4" "${IPv4}" "${CHAIN_NAME}4" "${intranet4[*]}"
-  [[ "${IPv6_enable}" == "false" ]] && return 1
-  create_tproxy "ip -6" "${IPv6}" "${CHAIN_NAME}6" "${intranet6[*]}"
+run_add_tproxy_rules() {
+  add_tproxy_rules "ip -4" "${IPV}" "${CHAIN_NAME}4" "${intranet4[*]}"
+  [[ "${IPV6}" == "false" ]] && return 1
+  add_tproxy_rules "ip -6" "${IP6V}" "${CHAIN_NAME}6" "${intranet6[*]}"
 }
 
-stop_tproxy() {
-  delete_tproxy "ip -4" "${IPv4}" "${CHAIN_NAME}4"
-  [[ "${IPv6_enable}" == "false" ]] && return 1
-  delete_tproxy "ip -6" "${IPv6}" "${CHAIN_NAME}6"
+run_del_tproxy_rules() {
+  del_tproxy_rules "ip -4" "${IPV}" "${CHAIN_NAME}4"
+  [[ "${IPV6}" == "false" ]] && return 1
+  del_tproxy_rules "ip -6" "${IP6V}" "${CHAIN_NAME}6"
 }
 
 quic_rules() {
-  local ipt_cmd="$1"
-  local action="$2"
-
-  ${ipt_cmd} ${action} OUTPUT -p udp --dport 443 -m owner ! --uid-owner ${CORE_UID} ! --gid-owner ${CORE_GID} -j REJECT
-  ${ipt_cmd} ${action} OUTPUT -p udp --dport 80 -m owner ! --uid-owner ${CORE_UID} ! --gid-owner ${CORE_GID} -j REJECT
+  ${1} ${2} OUTPUT -p udp --dport 443 -m owner ! --uid-owner ${CORE_UID} ! --gid-owner ${CORE_GID} -j REJECT
+  ${1} ${2} OUTPUT -p udp --dport 80 -m owner ! --uid-owner ${CORE_UID} ! --gid-owner ${CORE_GID} -j REJECT
 }
 
-start_quic() {
+run_add_quic_rules() {
   if [ "${QUIC}" = "disable" ]; then
-    quic_rules "${IPv4}" "-I"
-    [[ "${IPv6_enable}" == "false" ]] && return 1
-    quic_rules "${IPv6}" "-I"
+    quic_rules "${IPV}" "-I"
+    [[ "${IPV6}" == "false" ]] && return 1
+    quic_rules "${IP6V}" "-I"
   fi
 }
 
-stop_quic() {
+run_del_disable_quic() {
   if [ "${QUIC}" = "disable" ]; then
-    quic_rules "${IPv4}" "-D"
-    [[ "${IPv6_enable}" == "false" ]] && return 1
-    quic_rules "${IPv6}" "-D"
+    quic_rules "${IPV}" "-D"
+    [[ "${IPV6}" == "false" ]] && return 1
+    quic_rules "${IP6V}" "-D"
   fi
 }
 
-enable_tproxy() {
-  [ -f "${LOG_DIR}/pid.txt" ] && disable_tproxy
-  { check_files_complete; init_uids; }
-  { [[ "${IPv6_enable}" == "true" ]] && ipv6_enable || disable_ipv6; } >/dev/null 2>&1
-  { start_tproxy; start_quic; } >/dev/null 2>&1
-  { fw_clean iptables; fw_clean ip6tables; }
+start_tproxy() {
+  [ -f "${LOG_DIR}/pid.txt" ] && stop_tproxy
+  check_files_complete
+  runExternalKernel enable 
+  { init_base; init_dns; init_route; init_uids; }
+  { [[ "${IPV6}" == "true" ]] && ipv6_enable || disable_ipv6; } >/dev/null 2>&1
+  { run_add_tproxy_rules; run_add_quic_rules; } >/dev/null 2>&1
+  fw_clean iptables
+  fw_clean ip6tables
   ulimit -SHn 1000000
-  { 
-    nohup busybox setuidgid ${CORE_UID}:${CORE_GID} ${CORE} run >/dev/null 2>&1 &
-    PID_CORE=$!
-    [ -n "${PID_CORE}" ] && echo "pid_${CORE##*/}:${PID_CORE}" >>"${LOG_DIR}/pid.txt"
-  }
+  nohup busybox setuidgid ${CORE_UID}:${CORE_GID} ${CORE} run -confdir ${CONF_DIR} >/dev/null 2>&1 &
+  PID_CORE=$!
   cron_task
+  pid-record
   toast "🤪NetProxy ENABLED"
 }
 
-disable_tproxy() {
+stop_tproxy() {
   if [ -f "${LOG_DIR}/pid.txt" ]; then
-    { stop_tproxy; stop_quic; } >/dev/null 2>&1
+    { run_del_tproxy_rules; run_del_disable_quic; } >/dev/null 2>&1
     ip -6 rule del unreachable pref 100 >/dev/null 2>&1
     while IFS=: read name pid; do
       kill -9 "${pid}"
@@ -173,6 +169,6 @@ disable_tproxy() {
   toast "🥴NetProxy DISABLED"
 }
 
-case "$1" in enable) enable_tproxy ;; disable) disable_tproxy ;; esac
+case "$1" in enable) start_tproxy ;; disable) stop_tproxy ;; esac
 
-# Last edited: 2026.4.16
+# Last edited: 2026.1.18

@@ -1,6 +1,6 @@
 # Release Notes
-## v1.11
-_Release Date: 2026-4-16_
+## v1.04
+_Release Date: 2026-1-30_
 
-- xray only
+- Update the `runExternalKernel` function
 ---
