@@ -108,13 +108,13 @@ del_tproxy_rules() {
 }
 
 run_add_tproxy_rules() {
-  add_tproxy_rules "ip -4" "${IPV}" "${CHAIN_NAME}4" "${intranet4[*]}"
+  add_tproxy_rules "ip -4" "${IP4V}" "${CHAIN_NAME}4" "${intranet4[*]}"
   [[ "${IPV6}" == "false" ]] && return 1
   add_tproxy_rules "ip -6" "${IP6V}" "${CHAIN_NAME}6" "${intranet6[*]}"
 }
 
 run_del_tproxy_rules() {
-  del_tproxy_rules "ip -4" "${IPV}" "${CHAIN_NAME}4"
+  del_tproxy_rules "ip -4" "${IP4V}" "${CHAIN_NAME}4"
   [[ "${IPV6}" == "false" ]] && return 1
   del_tproxy_rules "ip -6" "${IP6V}" "${CHAIN_NAME}6"
 }
@@ -126,7 +126,7 @@ quic_rules() {
 
 run_add_quic_rules() {
   if [ "${QUIC}" = "disable" ]; then
-    quic_rules "${IPV}" "-I"
+    quic_rules "${IP4V}" "-I"
     [[ "${IPV6}" == "false" ]] && return 1
     quic_rules "${IP6V}" "-I"
   fi
@@ -134,7 +134,7 @@ run_add_quic_rules() {
 
 run_del_disable_quic() {
   if [ "${QUIC}" = "disable" ]; then
-    quic_rules "${IPV}" "-D"
+    quic_rules "${IP4V}" "-D"
     [[ "${IPV6}" == "false" ]] && return 1
     quic_rules "${IP6V}" "-D"
   fi
