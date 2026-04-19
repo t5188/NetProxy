@@ -32,9 +32,6 @@ add_tproxy_rules() {
   ${2} -t mangle -F ${3}_EXTERNAL
   ${2} -t mangle -N ${3}_LOCAL
   ${2} -t mangle -F ${3}_LOCAL
-  ${2} -t mangle -N ${3}_BLOCK_LOOPBACK
-  ${2} -t mangle -F ${3}_BLOCK_LOOPBACK
-
   ${2} -t mangle -A ${3}_LOCAL -m owner --uid-owner ${CORE_UID} --gid-owner ${CORE_GID} -j RETURN
   
   for proto in udp tcp; do
@@ -46,9 +43,6 @@ add_tproxy_rules() {
     ${2} -t mangle -A ${3}_EXTERNAL -d ${subnet} -j RETURN
     ${2} -t mangle -A ${3}_LOCAL -d ${subnet} -j RETURN
   done
-
-  ${2} -t mangle -A ${3}_EXTERNAL -j ${3}_BLOCK_LOOPBACK
-  ${2} -t mangle -A ${3}_LOCAL -j ${3}_BLOCK_LOOPBACK
 
   for proto in udp tcp; do
     ${2} -t mangle -A ${3}_EXTERNAL -p ${proto} -j TPROXY --on-port "${tport}" --tproxy-mark "${FWMARK}"
@@ -101,10 +95,8 @@ del_tproxy_rules() {
   ${2} -t mangle -D OUTPUT -j ${3}_LOCAL
   ${2} -t mangle -F ${3}_EXTERNAL
   ${2} -t mangle -F ${3}_LOCAL
-  ${2} -t mangle -F ${3}_BLOCK_LOOPBACK
   ${2} -t mangle -X ${3}_EXTERNAL
   ${2} -t mangle -X ${3}_LOCAL
-  ${2} -t mangle -X ${3}_BLOCK_LOOPBACK
 }
 
 run_add_tproxy_rules() {
