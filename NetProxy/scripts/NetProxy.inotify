@@ -1,17 +1,18 @@
 #!/system/bin/sh
-cd ${0%/*} # current working directory
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+. "${SCRIPT_DIR}/settings.ini"
 events=$1
 monitor_file=$3
 
-if [[ "${monitor_file}" == "disable" ]]; then
+if [ "${monitor_file}" == "disable" ]; then
   case "${events}" in
   "d")
-    $(pwd)/NetProxy.service enable >/dev/null 2>&1
+    ${SCRIPT_DIR}/NetProxy.service enable >/dev/null 2>&1
     ;;
   "n")
-    $(pwd)/NetProxy.service disable >/dev/null 2>&1
+    ${SCRIPT_DIR}/NetProxy.service disable >/dev/null 2>&1
     ;;
   esac
 fi
 
-# Last edited: 2026.1.12
+# Last edited: 2026.4.20

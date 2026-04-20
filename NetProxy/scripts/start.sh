@@ -1,24 +1,22 @@
 #!/system/bin/sh
-cd ${0%/*} # current working directory
-# source files
-source "$(pwd)/settings.ini"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+. "${SCRIPT_DIR}/settings.ini"
 
 proxy_service() {
   if [[ ! -f "${module_dir}/disable" ]]; then
-    $(pwd)/NetProxy.service enable >/dev/null 2>&1
+    ${SCRIPT_DIR}/NetProxy.service enable >/dev/null 2>&1
   else
     toast "Module Disabled"
   fi
 }
 
 start_inotifyd() {
-  PIDs=($(busybox pidof inotifyd)) # Environment variables are required.
-  for PID in "${PIDs[@]}"; do
-    if grep -q "$(pwd)/NetProxy.inotify" "/proc/$PID/cmdline"; then
+  for PID in $(busybox pidof inotifyd 2>/dev/null); do
+    if grep -q "${SCRIPT_DIR}/NetProxy.inotify" "/proc/$PID/cmdline"; then
       return
     fi
   done
-  inotifyd "$(pwd)/NetProxy.inotify" "${module_dir}" >/dev/null 2>&1 &
+  inotifyd "${SCRIPT_DIR}/NetProxy.inotify" "${module_dir}" >/dev/null 2>&1 &
 }
 
 proxy_service

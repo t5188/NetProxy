@@ -1,6 +1,6 @@
 #!/system/bin/sh
-cd ${0%/*} # current working directory
-source "$(pwd)/settings.ini"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+. "${SCRIPT_DIR}/settings.ini"
 
 disable_ipv6() {
   sysctl -w net.ipv4.ip_forward=1
@@ -155,7 +155,7 @@ stop_tproxy() {
     while IFS=: read name pid; do
       kill -9 "${pid}"
     done < "${LOG_DIR}/pid.txt"
-    find "$(dirname "$(pwd)")" -type f \( -name "*.log" -o -name "*.txt" -o -name "*.list" -o -name "root" \) -exec rm -f {} +
+    find "${PARENT_DIR}" -type f \( -name "*.log" -o -name "*.txt" -o -name "*.list" -o -name "root" \) -exec rm -f {} +
   fi
   toast "🥴NetProxy DISABLED"
 }
