@@ -1,6 +1,6 @@
 #!/system/bin/sh
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-. "${SCRIPT_DIR}/settings.ini"
+scripts_dir="$(cd "$(dirname "$0")" && pwd)"
+. "${scripts_dir}/settings.ini"
 
 disable_ipv6() {
   sysctl -w net.ipv4.ip_forward=1
