@@ -143,8 +143,8 @@ start_tproxy() {
   ulimit -SHn 1000000
   nohup busybox setuidgid ${CORE_UID}:${CORE_GID} ${CORE} run -confdir ${CONF_DIR} >/dev/null 2>&1 &
   PID_CORE=$!
+  [ -n "${PID_CORE}" ] && echo "pid_${CORE##*/}:${PID_CORE}" >"${LOG_DIR}/pid.txt"
   cron_task
-  pid-record
   toast "🤪NetProxy ENABLED"
 }
 
@@ -162,4 +162,4 @@ stop_tproxy() {
 
 case "$1" in enable) start_tproxy ;; disable) stop_tproxy ;; esac
 
-# Last edited: 2026.4.20
+# Last edited: 2026.4.21
