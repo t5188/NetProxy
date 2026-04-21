@@ -128,7 +128,6 @@ download_and_extract
 ui_print "- 正在设置权限"
 set_perm_recursive "${MODPATH}" 0 0 0755 0755
 set_perm_recursive /data/adb/NetProxy/ 0 3005 0755 0755
-set_perm_recursive /data/adb/NetProxy/scripts/ 0 3005 0755 0755
 set_perm /data/adb/service.d/NetProxy.sh 0 0 0755
 set_perm "${MODPATH}/uninstall.sh" 0 0 0755
 set_perm /data/adb/NetProxy/scripts/ 0 0 0755
