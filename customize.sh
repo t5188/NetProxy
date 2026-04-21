@@ -130,7 +130,6 @@ set_perm_recursive "${MODPATH}" 0 0 0755 0755
 set_perm_recursive /data/adb/NetProxy/ 0 3005 0755 0755
 set_perm /data/adb/service.d/NetProxy.sh 0 0 0755
 set_perm "${MODPATH}/uninstall.sh" 0 0 0755
-set_perm /data/adb/NetProxy/scripts/ 0 0 0755
 set_perm "${MODPATH}/action.sh" 0 0 0755
 ui_print "- 完成权限设置"
 
@@ -138,4 +137,4 @@ pm install -r /data/adb/NetProxy/scripts/toast.apk && rm -f /data/adb/NetProxy/s
 find "${source_folder}" -type f -name ".gitkeep" -exec rm -f {} +
 ui_print "- enjoy!"
 
-# Last edited: 2026.1.12
+# Last edited: 2026.4.22
