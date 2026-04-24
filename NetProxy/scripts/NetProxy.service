@@ -24,7 +24,7 @@ ipv6_enable() {
   ip -6 rule del unreachable pref 100 || true
 }
 
-add_tproxy_rules() {
+enable_tproxy() {
   ${1} rule add fwmark "${FWMARK}" table "${TABLE}" priority 1000
   ${1} route add local default dev lo table "${TABLE}"
 
@@ -87,7 +87,7 @@ add_tproxy_rules() {
   ${2} -t mangle -A OUTPUT -j ${3}_LOCAL
 }
 
-del_tproxy_rules() {
+disable_tproxy() {
   ${1} rule del fwmark "${FWMARK}" table "${TABLE}" priority 1000
   ${1} route del local default dev lo table "${TABLE}"
   ${1} route flush table "${TABLE}"
@@ -99,16 +99,16 @@ del_tproxy_rules() {
   ${2} -t mangle -X ${3}_LOCAL
 }
 
-run_add_tproxy_rules() {
-  add_tproxy_rules "ip -4" "${IPv4}" "${CHAIN_NAME}4" "${intranet4[*]}"
+run_tproxy() {
+  enable_tproxy "ip -4" "${IPv4}" "${CHAIN_NAME}4" "${intranet4[*]}"
   [[ "${IPv6_enable}" == "false" ]] && return 1
-  add_tproxy_rules "ip -6" "${IPv6}" "${CHAIN_NAME}6" "${intranet6[*]}"
+  enable_tproxy "ip -6" "${IPv6}" "${CHAIN_NAME}6" "${intranet6[*]}"
 }
 
-run_del_tproxy_rules() {
-  del_tproxy_rules "ip -4" "${IPv4}" "${CHAIN_NAME}4"
+end_tproxy() {
+  disable_tproxy "ip -4" "${IPv4}" "${CHAIN_NAME}4"
   [[ "${IPv6_enable}" == "false" ]] && return 1
-  del_tproxy_rules "ip -6" "${IPv6}" "${CHAIN_NAME}6"
+  disable_tproxy "ip -6" "${IPv6}" "${CHAIN_NAME}6"
 }
 
 quic_rules() {
@@ -116,7 +116,7 @@ quic_rules() {
   ${1} ${2} OUTPUT -p udp --dport 80 -m owner ! --uid-owner ${CORE_UID} ! --gid-owner ${CORE_GID} -j REJECT
 }
 
-run_add_quic_rules() {
+reject_quic() {
   if [ "${QUIC}" = "disable" ]; then
     quic_rules "${IPv4}" "-I"
     [[ "${IPv6_enable}" == "false" ]] && return 1
@@ -124,7 +124,7 @@ run_add_quic_rules() {
   fi
 }
 
-run_del_disable_quic() {
+accept_quic() {
   if [ "${QUIC}" = "disable" ]; then
     quic_rules "${IPv4}" "-D"
     [[ "${IPv6_enable}" == "false" ]] && return 1
@@ -137,7 +137,7 @@ start_tproxy() {
   check_files_complete
   { init_base; init_dns; init_route; init_uids; }
   { [[ "${IPv6_enable}" == "true" ]] && ipv6_enable || disable_ipv6; } >/dev/null 2>&1
-  { run_add_tproxy_rules; run_add_quic_rules; } >/dev/null 2>&1
+  { run_tproxy; reject_quic; } >/dev/null 2>&1
   fw_clean iptables
   fw_clean ip6tables
   ulimit -SHn 1000000
@@ -150,7 +150,7 @@ start_tproxy() {
 
 stop_tproxy() {
   if [ -f "${LOG_DIR}/pid.txt" ]; then
-    { run_del_tproxy_rules; run_del_disable_quic; } >/dev/null 2>&1
+    { end_tproxy; accept_quic; } >/dev/null 2>&1
     ip -6 rule del unreachable pref 100 >/dev/null 2>&1
     while IFS=: read name pid; do
       kill -9 "${pid}"
