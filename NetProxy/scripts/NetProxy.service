@@ -24,7 +24,7 @@ ipv6_enable() {
   ip -6 rule del unreachable pref 100 || true
 }
 
-enable_tproxy() {
+tp_add() {
   ${1} rule add fwmark "${FWMARK}" table "${TABLE}" priority 1000
   ${1} route add local default dev lo table "${TABLE}"
 
@@ -87,7 +87,7 @@ enable_tproxy() {
   ${2} -t mangle -A OUTPUT -j ${3}_LOCAL
 }
 
-disable_tproxy() {
+tp_del() {
   ${1} rule del fwmark "${FWMARK}" table "${TABLE}" priority 1000
   ${1} route del local default dev lo table "${TABLE}"
   ${1} route flush table "${TABLE}"
@@ -99,16 +99,16 @@ disable_tproxy() {
   ${2} -t mangle -X ${3}_LOCAL
 }
 
-run_tproxy() {
-  enable_tproxy "ip -4" "${IPv4}" "${CHAIN_NAME}4" "${intranet4[*]}"
+tp_apply() {
+  tp_add "ip -4" "${IPv4}" "${CHAIN_NAME}4" "${intranet4[*]}"
   [[ "${IPv6_enable}" == "false" ]] && return 1
-  enable_tproxy "ip -6" "${IPv6}" "${CHAIN_NAME}6" "${intranet6[*]}"
+  tp_add "ip -6" "${IPv6}" "${CHAIN_NAME}6" "${intranet6[*]}"
 }
 
-end_tproxy() {
-  disable_tproxy "ip -4" "${IPv4}" "${CHAIN_NAME}4"
+tp_clear() {
+  tp_del "ip -4" "${IPv4}" "${CHAIN_NAME}4"
   [[ "${IPv6_enable}" == "false" ]] && return 1
-  disable_tproxy "ip -6" "${IPv6}" "${CHAIN_NAME}6"
+  tp_del "ip -6" "${IPv6}" "${CHAIN_NAME}6"
 }
 
 quic_rules() {
@@ -132,12 +132,12 @@ accept_quic() {
   fi
 }
 
-start_tproxy() {
-  [ -f "${LOG_DIR}/pid.txt" ] && stop_tproxy
+tp_start() {
+  [ -f "${LOG_DIR}/pid.txt" ] && tp_stop
   check_files_complete
   { init_base; init_dns; init_route; init_uids; }
   { [[ "${IPv6_enable}" == "true" ]] && ipv6_enable || disable_ipv6; } >/dev/null 2>&1
-  { run_tproxy; reject_quic; } >/dev/null 2>&1
+  { tp_apply; reject_quic; } >/dev/null 2>&1
   fw_clean iptables
   fw_clean ip6tables
   ulimit -SHn 1000000
@@ -148,9 +148,9 @@ start_tproxy() {
   toast "🤪NetProxy ENABLED"
 }
 
-stop_tproxy() {
+tp_stop() {
   if [ -f "${LOG_DIR}/pid.txt" ]; then
-    { end_tproxy; accept_quic; } >/dev/null 2>&1
+    { tp_clear; accept_quic; } >/dev/null 2>&1
     ip -6 rule del unreachable pref 100 >/dev/null 2>&1
     while IFS=: read name pid; do
       kill -9 "${pid}"
@@ -160,6 +160,6 @@ stop_tproxy() {
   toast "🥴NetProxy DISABLED"
 }
 
-case "$1" in enable) start_tproxy ;; disable) stop_tproxy ;; esac
+case "$1" in enable) tp_start ;; disable) tp_stop ;; esac
 
 # Last edited: 2026.4.21
