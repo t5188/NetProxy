@@ -1,4 +1,4 @@
 # Release Notes
-## v2.02
-_Release Date: 2026-4-22_
+## v2.03
+_Release Date: 2026-4-24_
 
