@@ -5,7 +5,7 @@ export PATH="/data/adb/ap/bin:/data/adb/ksu/bin:/data/adb/magisk:$PATH"
 module_dir="/data/adb/modules/ANetProxy"
 scripts_dir="/data/adb/NetProxy/scripts"
 
-restart_proxy_service() {
+restart_proxy() {
   if [ ! -f "${module_dir}/disable" ]; then
     echo "🔁Restart NetProxy"
     ${scripts_dir}/NetProxy.service enable >/dev/null 2>&1
@@ -16,6 +16,6 @@ restart_proxy_service() {
   fi
 }
 
-restart_proxy_service
+restart_proxy
 
-# Last edited: 2026.1.13
+# Last edited: 2026.4.24
