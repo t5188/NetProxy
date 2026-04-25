@@ -13,18 +13,18 @@ rm -f "${MODPATH}/CHANGELOG.md"
 
 if [ -d "${source_folder}" ]; then
   mv "${source_folder}" "${destination_folder}"
-  ui_print "- 正在备份已有文件"
+  ui_print "- Backing up existing files"
   rm -rf "${source_folder}"
 else
-  ui_print "- 正在初始安装"
+  ui_print "- Performing initial installation"
 fi
 
 if [ -d "/data/adb/modules/ANetProxy" ]; then
   rm -rf "/data/adb/modules/ANetProxy"
-  ui_print "- 旧模块已删除"
+  ui_print "- Old module has been removed"
 fi
 
-ui_print "- 正在释放文件"
+ui_print "- Releasing files"
 unzip -o "${ZIPFILE}" 'NetProxy/*' -d "${unzip_path}" >&2
 unzip -j -o "${ZIPFILE}" 'NetProxy.sh' -d /data/adb/service.d >&2
 unzip -j -o "${ZIPFILE}" 'uninstall.sh' -d "${MODPATH}" >&2
@@ -50,25 +50,24 @@ if [ -n "${largest_folder}" ]; then
       if [ -d "${folder}/conf" ]; then
         cp -rf "${folder}/conf/"* /data/adb/NetProxy/conf/
         ui_print "- Copied contents of ${folder}/conf to /data/adb/NetProxy/conf/"
-        ui_print "- 成功还原配置文件"
+        ui_print "- Configuration file restored successfully"
       fi
       break
     fi
   done
 else
-  ui_print "- 首次安装，无备份配置可还原"
+  ui_print "- First-time installation, no backup configuration available to restore"
 fi
 
-ui_print "- 正在设置权限"
+ui_print "- Setting permissions"
 set_perm_recursive "${MODPATH}" 0 0 0755 0755
 set_perm_recursive /data/adb/NetProxy/ 0 3005 0755 0755
 set_perm /data/adb/service.d/NetProxy.sh 0 0 0755
 set_perm "${MODPATH}/uninstall.sh" 0 0 0755
 set_perm "${MODPATH}/action.sh" 0 0 0755
-ui_print "- 完成权限设置"
+ui_print "- Permissions set successfully"
 
-pm install -r /data/adb/NetProxy/scripts/toast.apk && rm -f /data/adb/NetProxy/scripts/toast.apk || ui_print "- 请手动安装toast.apk"
+pm install -r /data/adb/NetProxy/scripts/toast.apk && rm -f /data/adb/NetProxy/scripts/toast.apk || ui_print "- Please manually install toast.apk"
 find "${source_folder}" -type f -name ".gitkeep" -exec rm -f {} +
 ui_print "- enjoy!"
 
-# Last edited: 2026.4.22

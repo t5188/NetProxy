@@ -18,4 +18,3 @@ restart_proxy() {
 
 restart_proxy
 
-# Last edited: 2026.4.24

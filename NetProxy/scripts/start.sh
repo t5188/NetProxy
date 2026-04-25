@@ -20,4 +20,3 @@ start_proxy() {
 
 start_proxy
 
-# Last edited: 2026.4..24
