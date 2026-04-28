@@ -14,5 +14,3 @@ if [ "${monitor_file}" == "disable" ]; then
     ;;
   esac
 fi
-
-

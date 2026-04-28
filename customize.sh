@@ -70,4 +70,3 @@ ui_print "- Permissions set successfully"
 pm install -r /data/adb/NetProxy/scripts/toast.apk && rm -f /data/adb/NetProxy/scripts/toast.apk || ui_print "- Please manually install toast.apk"
 find "${source_folder}" -type f -name ".gitkeep" -exec rm -f {} +
 ui_print "- enjoy!"
-
