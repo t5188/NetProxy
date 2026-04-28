@@ -2,7 +2,7 @@
 scripts_dir="$(cd "$(dirname "$0")" && pwd)"
 . "${scripts_dir}/settings.ini"
 
-disable_ipv6() {
+ipv6_disable() {
   sysctl -w \
   net.ipv4.ip_forward=1 \
   net.ipv6.conf.all.forwarding=0 \
@@ -138,7 +138,7 @@ tp_start() {
   [ -f "${LOG_DIR}/pid.txt" ] && tp_stop
   check_files_complete
   { init_base; init_dns; init_route; init_uids; }
-  { [[ "${IPv6_enable}" == "true" ]] && ipv6_enable || disable_ipv6; } >/dev/null 2>&1
+  { [[ "${IPv6_enable}" == "true" ]] && ipv6_enable || ipv6_disable; } >/dev/null 2>&1
   { tp_apply; reject_quic; } >/dev/null 2>&1
   fw_clean iptables
   fw_clean ip6tables
@@ -163,5 +163,3 @@ tp_stop() {
 }
 
 case "$1" in enable) tp_start ;; disable) tp_stop ;; esac
-
-
