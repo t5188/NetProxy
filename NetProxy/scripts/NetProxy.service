@@ -137,7 +137,7 @@ accept_quic() {
 tp_start() {
   [ -f "${LOG_DIR}/pid.txt" ] && tp_stop
   check_files_complete
-  { init_base; init_dns; init_route; init_uids; }
+  { cfg_base; cfg_dns; cfg_route; init_uids; }
   { [[ "${IPv6_enable}" == "true" ]] && ipv6_enable || ipv6_disable; } >/dev/null 2>&1
   { tp_apply; reject_quic; } >/dev/null 2>&1
   fw_clean iptables
