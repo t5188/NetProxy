@@ -34,6 +34,7 @@ tp_add() {
   ${2} -t mangle -F ${3}_EXTERNAL
   ${2} -t mangle -N ${3}_LOCAL
   ${2} -t mangle -F ${3}_LOCAL
+  
   ${2} -t mangle -A ${3}_LOCAL -m owner --uid-owner ${CORE_UID} --gid-owner ${CORE_GID} -j RETURN
   
   for proto in udp tcp; do
