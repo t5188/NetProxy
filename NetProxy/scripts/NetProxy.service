@@ -128,10 +128,8 @@ reject_quic() {
 }
 
 accept_quic() {
-  if [[ $QUIC == "disable" ]]; then
-    quic_rules "${IPv4}" "-D"
-    [[ $IPv6_enable == "true" ]] && quic_rules "${IPv6}" "-D"
-  fi
+  quic_rules "${IPv4}" "-D" 2>/dev/null
+  quic_rules "${IPv6}" "-D" 2>/dev/null
 }
 
 tp_start() {
