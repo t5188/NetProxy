@@ -90,15 +90,15 @@ tp_add() {
 }
 
 tp_del() {
-  ${1} rule del fwmark "${FWMARK}" table "${TABLE}" priority 1000
-  ${1} route del local default dev lo table "${TABLE}"
-  ${1} route flush table "${TABLE}"
-  ${2} -t mangle -D PREROUTING -j ${3}_EXTERNAL
-  ${2} -t mangle -D OUTPUT -j ${3}_LOCAL
-  ${2} -t mangle -F ${3}_EXTERNAL
-  ${2} -t mangle -F ${3}_LOCAL
-  ${2} -t mangle -X ${3}_EXTERNAL
-  ${2} -t mangle -X ${3}_LOCAL
+  ${1} rule del fwmark "${FWMARK}" table "${TABLE}" priority 1000 2>/dev/null
+  ${1} route del local default dev lo table "${TABLE}" 2>/dev/null
+  ${1} route flush table "${TABLE}" 2>/dev/null
+  ${2} -t mangle -D PREROUTING -j ${3}_EXTERNAL 2>/dev/null
+  ${2} -t mangle -D OUTPUT -j ${3}_LOCAL 2>/dev/null
+  ${2} -t mangle -F ${3}_EXTERNAL 2>/dev/null
+  ${2} -t mangle -F ${3}_LOCAL 2>/dev/null
+  ${2} -t mangle -X ${3}_EXTERNAL 2>/dev/null
+  ${2} -t mangle -X ${3}_LOCAL 2>/dev/null
 }
 
 tp_apply() {
@@ -110,14 +110,14 @@ tp_apply() {
 
 tp_clear() {
   tp_del "ip -4" "${IPv4}" "${CHAIN_NAME}4"
-  tp_del "ip -6" "${IPv6}" "${CHAIN_NAME}6" 2>/dev/null
+  tp_del "ip -6" "${IPv6}" "${CHAIN_NAME}6"
 }
 
 quic_rules() {
   local ports="443,80"
-  ${1} -t filter ${2} OUTPUT -p udp -m multiport --dports ${ports} -j DROP
-  ${1} -t filter ${2} OUTPUT -p udp -m multiport --dports ${ports} -m owner --uid-owner ${CORE_UID} -j RETURN
-  ${1} -t filter ${2} FORWARD -p udp -m multiport --dports ${ports} -j DROP
+  ${1} -t filter ${2} OUTPUT -p udp -m multiport --dports ${ports} -j DROP 2>/dev/null
+  ${1} -t filter ${2} OUTPUT -p udp -m multiport --dports ${ports} -m owner --uid-owner ${CORE_UID} -j RETURN 2>/dev/null
+  ${1} -t filter ${2} FORWARD -p udp -m multiport --dports ${ports} -j DROP 2>/dev/null
 }
 
 reject_quic() {
@@ -128,8 +128,8 @@ reject_quic() {
 }
 
 accept_quic() {
-  quic_rules "${IPv4}" "-D" 2>/dev/null
-  quic_rules "${IPv6}" "-D" 2>/dev/null
+  quic_rules "${IPv4}" "-D" 
+  quic_rules "${IPv6}" "-D"
 }
 
 tp_start() {
