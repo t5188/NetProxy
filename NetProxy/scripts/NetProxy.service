@@ -115,27 +115,22 @@ tp_clear() {
 
 quic_rules() {
   local ports="443,80"
-  for chain in OUTPUT FORWARD; do
-    ${1} ${2} ${chain} -p udp -m multiport --dports ${ports} -m owner --uid-owner ${CORE_UID} -j RETURN
-    ${1} ${2} ${chain} -p udp -m multiport --dports ${ports} -j DROP
-  done
+  ${1} -t filter ${2} OUTPUT -p udp -m multiport --dports ${ports} -j DROP
+  ${1} -t filter ${2} OUTPUT -p udp -m multiport --dports ${ports} -m owner --uid-owner ${CORE_UID} -j RETURN
+  ${1} -t filter ${2} FORWARD -p udp -m multiport --dports ${ports} -j DROP
 }
 
 reject_quic() {
   if [[ $QUIC == "disable" ]]; then
     quic_rules "${IPv4}" "-I"
-    if [[ $IPv6_enable == "true" ]]; then
-      quic_rules "${IPv6}" "-I"
-    fi
+    [[ $IPv6_enable == "true" ]] && quic_rules "${IPv6}" "-I"
   fi
 }
 
 accept_quic() {
   if [[ $QUIC == "disable" ]]; then
     quic_rules "${IPv4}" "-D"
-    if [[ $IPv6_enable == "true" ]]; then
-      quic_rules "${IPv6}" "-D"
-    fi
+    [[ $IPv6_enable == "true" ]] && quic_rules "${IPv6}" "-D"
   fi
 }
 
