@@ -103,34 +103,39 @@ tp_del() {
 
 tp_apply() {
   tp_add "ip -4" "${IPv4}" "${CHAIN_NAME}4" "${intranet4[*]}"
-  [[ "${IPv6_enable}" == "false" ]] && return 1
-  tp_add "ip -6" "${IPv6}" "${CHAIN_NAME}6" "${intranet6[*]}"
+  if [[ $IPv6_enable == "true" ]]; then
+    tp_add "ip -6" "${IPv6}" "${CHAIN_NAME}6" "${intranet6[*]}"
+  fi
 }
 
 tp_clear() {
   tp_del "ip -4" "${IPv4}" "${CHAIN_NAME}4"
-  [[ "${IPv6_enable}" == "false" ]] && return 1
   tp_del "ip -6" "${IPv6}" "${CHAIN_NAME}6"
 }
 
 quic_rules() {
-  ${1} ${2} OUTPUT -p udp --dport 443 -m owner ! --uid-owner ${CORE_UID} ! --gid-owner ${CORE_GID} -j REJECT
-  ${1} ${2} OUTPUT -p udp --dport 80 -m owner ! --uid-owner ${CORE_UID} ! --gid-owner ${CORE_GID} -j REJECT
+  local ports="443,80"
+  for chain in OUTPUT FORWARD; do
+    ${1} ${2} ${chain} -p udp -m multiport --dports ${ports} -m owner --uid-owner ${CORE_UID} -j RETURN
+    ${1} ${2} ${chain} -p udp -m multiport --dports ${ports} -j DROP
+  done
 }
 
 reject_quic() {
-  if [ "${QUIC}" = "disable" ]; then
+  if [[ $QUIC == "disable" ]]; then
     quic_rules "${IPv4}" "-I"
-    [[ "${IPv6_enable}" == "false" ]] && return 1
-    quic_rules "${IPv6}" "-I"
+    if [[ $IPv6_enable == "true" ]]; then
+      quic_rules "${IPv6}" "-I"
+    fi
   fi
 }
 
 accept_quic() {
-  if [ "${QUIC}" = "disable" ]; then
+  if [[ $QUIC == "disable" ]]; then
     quic_rules "${IPv4}" "-D"
-    [[ "${IPv6_enable}" == "false" ]] && return 1
-    quic_rules "${IPv6}" "-D"
+    if [[ $IPv6_enable == "true" ]]; then
+      quic_rules "${IPv6}" "-D"
+    fi
   fi
 }
 
