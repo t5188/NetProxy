@@ -110,7 +110,7 @@ tp_apply() {
 
 tp_clear() {
   tp_del "ip -4" "${IPv4}" "${CHAIN_NAME}4"
-  tp_del "ip -6" "${IPv6}" "${CHAIN_NAME}6"
+  tp_del "ip -6" "${IPv6}" "${CHAIN_NAME}6" 2>/dev/null
 }
 
 quic_rules() {
