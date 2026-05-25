@@ -104,7 +104,7 @@ tp_del() {
 
 tp_apply() {
   tp_add "ip -4" "${IPv4}" "${CHAIN_NAME}4" "${intranet4[*]}"
-  if [[ $IPv6_enable == "true" ]]; then
+  if [[ "${IPv6_enable}" == "enable" ]]; then
     tp_add "ip -6" "${IPv6}" "${CHAIN_NAME}6" "${intranet6[*]}"
   fi
 }
@@ -124,7 +124,7 @@ quic_rules() {
 reject_quic() {
   if [[ $QUIC == "disable" ]]; then
     quic_rules "${IPv4}" "-I"
-    [[ $IPv6_enable == "true" ]] && quic_rules "${IPv6}" "-I"
+    [[ "${IPv6_enable}" == "enable" ]] && quic_rules "${IPv6}" "-I"
   fi
 }
 
@@ -137,7 +137,7 @@ tp_start() {
   [ -f "${LOG_DIR}/pid.txt" ] && tp_stop
   ensure_xray_assets
   { cfg_base; cfg_dns; cfg_route; find_packages_uid; }
-  { [[ "${IPv6_enable}" == "true" ]] && ipv6_enable || ipv6_disable; } >/dev/null 2>&1
+  { [[ "${IPv6_enable}" == "enable" ]] && ipv6_enable || ipv6_disable; } >/dev/null 2>&1
   { tp_apply; reject_quic; } >/dev/null 2>&1
   fw_clean iptables
   fw_clean ip6tables
