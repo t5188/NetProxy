@@ -122,7 +122,7 @@ quic_rules() {
 }
 
 reject_quic() {
-  if [[ $QUIC == "disable" ]]; then
+  if [[ "${QUIC}" == "disable" ]]; then
     quic_rules "${IPv4}" "-I"
     [[ "${IPv6_enable}" == "enable" ]] && quic_rules "${IPv6}" "-I"
   fi
