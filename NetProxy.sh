@@ -1,9 +1,8 @@
 #!/system/bin/sh
+export PATH="/data/adb/ap/bin:/data/adb/ksu/bin:/data/adb/magisk:$PATH"
 scripts_dir="/data/adb/NetProxy/scripts"
 (
-  until [ "$(getprop sys.boot_completed)" = "1" ]; do
-    sleep 3
-  done
+   resetprop -w sys.boot_completed
   "${scripts_dir}/start.sh"
 ) &
 exit 0
