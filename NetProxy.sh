@@ -2,7 +2,7 @@
 export PATH="/data/adb/ap/bin:/data/adb/ksu/bin:/data/adb/magisk:$PATH"
 scripts_dir="/data/adb/NetProxy/scripts"
 (
-   resetprop -w sys.boot_completed
+  resetprop -w sys.boot_completed
   "${scripts_dir}/start.sh"
 ) &
 exit 0
