@@ -117,7 +117,7 @@ tp_clear() {
 quic_rules() {
   local ports="443,80"
   ${1} -t filter ${2} OUTPUT -p udp -m multiport --dports ${ports} -j DROP 2>/dev/null
-  ${1} -t filter ${2} OUTPUT -p udp -m multiport --dports ${ports} -m owner --uid-owner ${CORE_UID} -j RETURN 2>/dev/null
+  ${1} -t filter ${2} OUTPUT -p udp -m multiport --dports ${ports} -m owner --uid-owner ${CORE_UID} --gid-owner ${CORE_GID} -j RETURN 2>/dev/null
   ${1} -t filter ${2} FORWARD -p udp -m multiport --dports ${ports} -j DROP 2>/dev/null
 }
 
