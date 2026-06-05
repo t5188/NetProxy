@@ -136,7 +136,7 @@ accept_quic() {
 tp_start() {
   [ -f "${LOG_DIR}/pid.txt" ] && tp_stop
   ensure_xray_assets
-  { cfg_base; cfg_dns; cfg_route; find_packages_uid; }
+  find_packages_uid
   { [[ "${IPv6_enable}" == "enable" ]] && ipv6_enable || ipv6_disable; } >/dev/null 2>&1
   { tp_apply; reject_quic; } >/dev/null 2>&1
   fw_clean iptables
