@@ -36,12 +36,7 @@ tp_add() {
   ${2} -t mangle -F ${3}_OUTPUT
   
   ${2} -t mangle -A ${3}_OUTPUT -m owner --uid-owner ${CORE_UID} --gid-owner ${CORE_GID} -j RETURN
-  
-  for proto in udp tcp; do
-    ${2} -t mangle -A ${3}_OUTPUT -p ${proto} --dport 53 -j MARK --set-xmark ${FWMARK}
-    ${2} -t mangle -A ${3}_PREROUTING -p ${proto} --dport 53 -j TPROXY --on-port ${tport} --tproxy-mark ${FWMARK}
-  done
-  
+
   for subnet in ${4}; do
     ${2} -t mangle -A ${3}_PREROUTING -d ${subnet} -j RETURN
     ${2} -t mangle -A ${3}_OUTPUT -d ${subnet} -j RETURN
@@ -49,6 +44,8 @@ tp_add() {
 
   for proto in udp tcp; do
     ${2} -t mangle -A ${3}_PREROUTING -p ${proto} -j TPROXY --on-port "${tport}" --tproxy-mark "${FWMARK}"
+    ${2} -t mangle -I ${3}_OUTPUT -p ${proto} --dport 53 -j MARK --set-xmark ${FWMARK}
+    ${2} -t mangle -I ${3}_PREROUTING -p ${proto} --dport 53 -j TPROXY --on-port ${tport} --tproxy-mark ${FWMARK}
   done
 
   if [[ -n "${AIDs}" ]]; then
