@@ -48,13 +48,6 @@ tp_add() {
   
   ${2} -t mangle -I ${3}_OUTPUT -m owner --uid-owner ${CORE_UID} --gid-owner ${CORE_GID} -j RETURN
 
-  if [[ -n "${AIDs}" ]]; then
-    for AID in ${AIDs[@]}; do
-      ${2} -t mangle -A ${3}_OUTPUT -m owner --uid-owner ${AID} -p tcp -j MARK --set-xmark ${FWMARK}
-      ${2} -t mangle -A ${3}_OUTPUT -m owner --uid-owner ${AID} -p udp -j MARK --set-xmark ${FWMARK}
-    done
-  fi
-
   case "${PROXY_MODE}" in
   "blacklist")
     if [[ ${#uids[@]} -gt 0 ]]; then
