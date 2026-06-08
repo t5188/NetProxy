@@ -49,6 +49,16 @@ tp_add() {
   ${2} -t mangle -I ${3}_OUTPUT -m owner --uid-owner ${CORE_UID} --gid-owner ${CORE_GID} -j RETURN
 
   case "${PROXY_MODE}" in
+  "whitelist")
+    if [[ ${#uids[@]} -gt 0 ]]; then
+      for appid in ${uids[*]}; do
+        ${2} -t mangle -A ${3}_OUTPUT -m owner --uid-owner ${appid} -p tcp -j MARK --set-xmark ${FWMARK}
+        ${2} -t mangle -A ${3}_OUTPUT -m owner --uid-owner ${appid} -p udp -j MARK --set-xmark ${FWMARK}
+      done
+    else
+      ${2} -t mangle -A ${3}_OUTPUT -j MARK --set-xmark ${FWMARK}
+    fi
+    ;;
   "blacklist")
     if [[ ${#uids[@]} -gt 0 ]]; then
       for appid in ${uids[*]}; do
@@ -56,16 +66,6 @@ tp_add() {
         ${2} -t mangle -A ${3}_OUTPUT -m owner --uid-owner ${appid} -p udp ! --dport 53 -j RETURN
       done
       ${2} -t mangle -A ${3}_OUTPUT -j MARK --set-xmark ${FWMARK}
-    else
-      ${2} -t mangle -A ${3}_OUTPUT -j MARK --set-xmark ${FWMARK}
-    fi
-    ;;
-  "whitelist")
-    if [[ ${#uids[@]} -gt 0 ]]; then
-      for appid in ${uids[*]}; do
-        ${2} -t mangle -A ${3}_OUTPUT -m owner --uid-owner ${appid} -p tcp -j MARK --set-xmark ${FWMARK}
-        ${2} -t mangle -A ${3}_OUTPUT -m owner --uid-owner ${appid} -p udp -j MARK --set-xmark ${FWMARK}
-      done
     else
       ${2} -t mangle -A ${3}_OUTPUT -j MARK --set-xmark ${FWMARK}
     fi
