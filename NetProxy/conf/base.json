@@ -1,0 +1,264 @@
+{
+  "log": {
+    "access": "/data/adb/NetProxy/log/access.log",
+    "error": "/data/adb/NetProxy/log/error.log",
+    "loglevel": "debug",
+    "dnsLog": true
+  },
+  "fakedns":[
+    {
+      "ipPool": "198.18.0.0/15",
+      "poolSize": 32768
+    },
+    {
+      "ipPool": "2001:2::/48",
+      "poolSize": 32768
+    }
+  ],
+  "dns": {
+    "hosts": {
+      "regexp:^.*umeng.*[.]com$": "0.0.0.0",
+      "regexp:^.*zijieapi.*[.]com$": "0.0.0.0",
+      "domain:googleapis.cn": "googleapis.com",
+      "regexp:^alt[1-8]-mtalk[.]google[.]com$": "mtalk.google.com",
+      "mtalk.google.com":[
+        "108.177.125.188",
+        "142.251.170.188",
+        "142.250.107.188",
+        "192.178.164.188",
+        "192.178.131.188"
+      ],
+      "dns.google":[
+        "8.8.8.8",
+        "8.8.4.4"
+      ],
+      "dns.alidns.com":[
+        "2400:3200::1",
+        "2400:3200:baba::1",
+        "223.5.5.5",
+        "223.6.6.6"
+      ],
+      "doh.pub":[
+        "1.12.12.12",
+        "120.53.53.53"
+      ]
+    },
+    "servers":[
+      {
+        "domains":[
+          "geosite:gfwlist-cn",
+          "domain:docs.live.net",
+          "domain:dc.services.visualstudio.com",
+          "domain:visualstudio.microsoft.com",
+          "domain:dotnetcli.azureedge.net"
+        ],
+        "address": "fakedns",
+        "skipFallback": true
+      },
+      {
+        "domains":[
+          "geosite:private",
+          "geosite:adobe",
+          "geosite:amd",
+          "geosite:apple@cn",
+          "geosite:aws",
+          "geosite:logitech",
+          "geosite:nvidia",
+          "domain:skk.moe",
+          "domain:aqi.cn",
+          "domain:waqi.info",
+          "geosite:microsoft",
+          "domain:microsoftcrmportals.com",
+          "domain:powerappsportals.com",
+          "domain:azurefd.us",
+          "domain:ustraveldocs.com",
+          "geosite:category-games@cn",
+          "domain:steamserver.net",
+          "domain:steamcontent.com",
+          "domain:epicgamescdn.com",
+          "domain:datarouter.ol.epicgames.com",
+          "regexp:^.*download[.]epicgames[.]com$",
+          "regexp:^.*epicgames-download.*$",
+          "regexp:^level[0-9][.]blizzard[.]com$",
+          "regexp:^.*blizzard.*cdn.*$",
+          "regexp:^.*cdn.*blizzard.*$",
+          "regexp:^blz.*[.]akamaized[.]net$"
+        ],
+        "address": "https+local://dns.alidns.com/dns-query",
+        "skipFallback": true
+      },
+      {
+        "domains":[
+          "geosite:geolocation-!cn",
+          "domain:bitcomet.com",
+          "domain:redircdn.com",
+          "domain:23img.com",
+          "domain:66img.cc",
+          "domain:imgly.net"
+        ],
+        "address": "fakedns",
+        "skipFallback": true
+      },
+      {
+        "address": "https+local://dns.alidns.com/dns-query",
+        "domains":[
+          "regexp:.*"
+        ],
+        "expectIPs":[
+          "geoip:cn"
+        ],
+        "timeoutMs": 1500,
+        "skipFallback": false
+      },
+      {
+        "address": "https+local://doh.pub/dns-query",
+        "domains":[
+          "regexp:.*"
+        ],
+        "expectIPs":[
+          "geoip:cn"
+        ],
+        "timeoutMs": 1500,
+        "skipFallback": false
+      },
+      {
+        "address": "https+local://doh.360.cn/dns-query",
+        "domains":[
+          "regexp:.*"
+        ],
+        "expectIPs":[
+          "geoip:cn"
+        ],
+        "timeoutMs": 1000,
+        "skipFallback": false
+      },
+      "fakedns"
+    ],
+    "queryStrategy": "UseIP",
+    "enableParallelQuery": false,
+    "useSystemHosts": true,
+    "tag": "xray-module_dns"
+  },
+  "outbounds":[
+    {
+      "protocol": "freedom",
+      "streamSettings": {
+        "sockopt": {
+          "domainStrategy": "UseIP",
+          "happyEyeballs": {
+            "interleave": 2,
+            "maxConcurrentTry": 4,
+            "tryDelayMs": 250
+          }
+        }
+      },
+      "tag": "direct"
+    },
+    {
+      "protocol": "blackhole",
+      "settings": {
+        "response": {
+          "type": "http"
+        }
+      },
+      "tag": "block"
+    },
+    {
+      "protocol": "dns",
+      "settings": {
+        "rewriteNetwork": "udp",
+        "rewriteAddress": "1.1.1.1",
+        "rewritePort": 53
+      },
+      "tag": "dns-out"
+    }
+  ],
+  "routing": {
+    "domainStrategy": "IPIfNonMatch",
+    "rules":[
+      {
+        "type": "field",
+        "port": 53,
+        "outboundTag": "dns-out"
+      },
+      {
+        "type": "field",
+        "domain":[
+          "regexp:^.*umeng.*[.]com$",
+          "regexp:^.*zijieapi.*[.]com$"
+        ],
+        "outboundTag": "block"
+      },
+      {
+        "type": "field",
+        "domain":[
+          "geosite:gfwlist-cn",
+          "domain:docs.live.net",
+          "domain:dc.services.visualstudio.com",
+          "domain:visualstudio.microsoft.com",
+          "domain:dotnetcli.azureedge.net"
+        ],
+        "outboundTag": "proxy"
+      },
+      {
+        "type": "field",
+        "domain":[
+          "geosite:private",
+          "geosite:adobe",
+          "geosite:amd",
+          "geosite:apple@cn",
+          "geosite:aws",
+          "geosite:logitech",
+          "geosite:nvidia",
+          "domain:skk.moe",
+          "domain:aqi.cn",
+          "domain:waqi.info",
+          "geosite:microsoft",
+          "domain:microsoftcrmportals.com",
+          "domain:powerappsportals.com",
+          "domain:azurefd.us",
+          "domain:ustraveldocs.com",
+          "geosite:category-games@cn",
+          "domain:steamserver.net",
+          "domain:steamcontent.com",
+          "domain:epicgamescdn.com",
+          "domain:datarouter.ol.epicgames.com",
+          "regexp:^.*download[.]epicgames[.]com$",
+          "regexp:^.*epicgames-download.*$",
+          "regexp:^level[0-9][.]blizzard[.]com$",
+          "regexp:^.*blizzard.*cdn.*$",
+          "regexp:^.*cdn.*blizzard.*$",
+          "regexp:^blz.*[.]akamaized[.]net$"
+        ],
+        "outboundTag": "direct"
+      },
+      {
+        "type": "field",
+        "domain":[
+          "geosite:geolocation-!cn",
+          "domain:bitcomet.com",
+          "domain:redircdn.com",
+          "domain:23img.com",
+          "domain:66img.cc",
+          "domain:imgly.net"
+        ],
+        "outboundTag": "proxy"
+      },
+      {
+        "type": "field",
+        "domain":[
+          "geosite:cn"
+        ],
+        "outboundTag": "direct"
+      },
+      {
+        "type": "field",
+        "ip":[
+          "geoip:private",
+          "geoip:cn"
+        ],
+        "outboundTag": "direct"
+      }
+    ]
+  }
+}
