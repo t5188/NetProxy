@@ -1,29 +1,29 @@
 {
-  "inbounds":[
-    {
-      "listen": "::",
-      "port": 1536,
-      "protocol": "dokodemo-door",
-      "settings": {
-        "network": "tcp,udp",
-        "followRedirect": true
-      },
-      "streamSettings": {
-        "sockopt": {
-          "tproxy": "tproxy",
-          "tcpFastOpen": true
-        }
-      },
-      "sniffing": {
-        "destOverride":[
-          "fakedns",
-          "http",
-          "tls",
-          "quic"
-        ],
-        "enabled": true,
-        "routeOnly": false
-      }
-    }
-  ]
+	"inbounds": [
+		{
+			"listen": "::",
+			"port": 1536,
+			"protocol": "dokodemo-door",
+			"settings": {
+				"network": "tcp,udp",
+				"followRedirect": true
+			},
+			"streamSettings": {
+				"sockopt": {
+					"tproxy": "tproxy",
+					"tcpFastOpen": true
+				}
+			},
+			"sniffing": {
+				"destOverride": [
+					"fakedns",
+					"http",
+					"tls",
+					"quic"
+				],
+				"enabled": true,
+				"routeOnly": false
+			}
+		}
+	]
 }
